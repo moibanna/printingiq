@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Image, Platform, Pressable, View } from 'react-native';
 import { Icon } from '../../components/icons';
 import { Text } from '../../components/text';
@@ -19,34 +19,16 @@ function notify(msg: string) {
 }
 
 export default function Sell() {
-  const { t, tl } = useI18n();
-  const { me, products, addProduct, updateProduct } = useStore();
+  const { me, products } = useStore();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const editing = edit ? products.find((x) => x.id === edit && x.vendorId === me?.id) : undefined;
+  if (!me) return <SignInGate />;
+  // A fresh form per product (or for a new one), so its fields start from that product.
+  return <ProductForm key={`${me.id}-${editing?.id ?? 'new'}`} editing={editing} vendorId={me.id} />;
+}
 
-  const [p, setP] = useState<Product>(() => emptyProduct(me?.id ?? ''));
-  const [nameLang, setNameLang] = useState<Lang>('ckb');
-  const [price, setPrice] = useState('');
-  const [thickness, setThickness] = useState('');
-  const [sizes, setSizes] = useState('');
-  const [minOrder, setMinOrder] = useState('');
-  const [stockQty, setStockQty] = useState('');
-  const [groupId, setGroupId] = useState(GROUPS[0].id);
-  const [busy, setBusy] = useState(false);
-
-  // Fill the form when editing an existing product
-  useEffect(() => {
-    const x = editing;
-    setP(x ?? emptyProduct(me?.id ?? ''));
-    setPrice(x?.price != null ? String(x.price) : '');
-    setThickness(x?.thickness.join(', ') ?? '');
-    setSizes(x?.sizes.join(', ') ?? '');
-    setMinOrder(x?.minOrder ? String(x.minOrder) : '');
-    setStockQty(x?.stockQty != null ? String(x.stockQty) : '');
-    if (x) setGroupId(categoryById(x.categoryId)?.group ?? GROUPS[0].id);
-  }, [editing?.id, me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!me) {
+function SignInGate() {
+  const { t } = useI18n();
     return (
       <Screen>
         <View style={[s.panel, { alignItems: 'center', padding: 28, gap: 12 }]}>
@@ -59,7 +41,20 @@ export default function Sell() {
         </View>
       </Screen>
     );
-  }
+}
+
+function ProductForm({ editing, vendorId }: { editing?: Product; vendorId: string }) {
+  const { t, tl } = useI18n();
+  const { addProduct, updateProduct } = useStore();
+  const [p, setP] = useState<Product>(() => editing ?? emptyProduct(vendorId));
+  const [nameLang, setNameLang] = useState<Lang>('ckb');
+  const [price, setPrice] = useState(editing?.price != null ? String(editing.price) : '');
+  const [thickness, setThickness] = useState(editing?.thickness.join(', ') ?? '');
+  const [sizes, setSizes] = useState(editing?.sizes.join(', ') ?? '');
+  const [minOrder, setMinOrder] = useState(editing?.minOrder ? String(editing.minOrder) : '');
+  const [stockQty, setStockQty] = useState(editing?.stockQty != null ? String(editing.stockQty) : '');
+  const [groupId, setGroupId] = useState((editing && categoryById(editing.categoryId)?.group) || GROUPS[0].id);
+  const [busy, setBusy] = useState(false);
 
   const set = <K extends keyof Product>(k: K, v: Product[K]) => setP((x) => ({ ...x, [k]: v }));
   const toggleColor = (c: ColorOption) =>
@@ -71,13 +66,12 @@ export default function Sell() {
   }
 
   async function publish() {
-    if (!me) return;
     if (!p.categoryId || !LANGS.some((l) => p.name[l].trim())) return notify(t('required'));
     setBusy(true);
     try {
       const data: Product = {
         ...p,
-        vendorId: me.id,
+        vendorId,
         price: price.trim() ? Number(price.replace(/[^\d.]/g, '')) : null,
         minOrder: minOrder ? Number(minOrder) : undefined,
         stockQty: stockQty.trim() ? Number(stockQty.replace(/\D/g, '')) : undefined,

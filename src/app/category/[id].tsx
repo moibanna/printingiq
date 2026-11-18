@@ -22,7 +22,7 @@ export default function CategoryScreen() {
       <Stack.Screen options={{ title }} />
       {parent && <Text style={{ color: C.muted }}>{tl(parent.name)} {arrow}</Text>}
       <SectionTitle icon={id} title={title} />
-      <ProductBrowser products={inCategory(products, id)} subcategories={group ? categoriesOf(group.id) : undefined} />
+      <ProductBrowser key={id} products={inCategory(products, id)} subcategories={group ? categoriesOf(group.id) : undefined} />
     </Screen>
   );
 }

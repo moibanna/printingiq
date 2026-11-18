@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Linking, Platform, Pressable, View } from 'react-native';
 import { Icon, IconName } from '../../components/icons';
 import { Text } from '../../components/text';
@@ -136,13 +136,10 @@ function Dashboard() {
   const store = useStore();
   const { me, leads, unread, products, email } = store;
   const [tab, setTab] = useState<Tab>('inquiries');
-  const [shop, setShop] = useState<ShopForm>(emptyShop);
+  const [shop, setShop] = useState<ShopForm>(() =>
+    me ? { name: me.name, phone: me.phone, whatsapp: me.whatsapp ?? '', city: me.city, about: me.about ?? '' } : emptyShop);
   const [saved, setSaved] = useState('');
   const [notifPerm, setNotifPerm] = useState(Platform.OS === 'web' && typeof Notification !== 'undefined' ? Notification.permission : 'granted');
-
-  useEffect(() => {
-    if (me) setShop({ name: me.name, phone: me.phone, whatsapp: me.whatsapp ?? '', city: me.city, about: me.about ?? '' });
-  }, [me]);
   if (!me) return null;
   const mine = products.filter((p) => p.vendorId === me.id);
 

@@ -6,9 +6,12 @@ import { useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
 import { C } from '../../lib/theme';
 
-const icon = (name: IconName) => ({ color, focused }: { color: unknown; focused: boolean }) => (
-  <Icon name={name} size={22} color={String(color ?? C.primary)} strokeWidth={focused ? 2.2 : 1.7} />
-);
+const icon = (name: IconName) => {
+  const TabBarIcon = ({ color, focused }: { color: unknown; focused: boolean }) => (
+    <Icon name={name} size={22} color={String(color ?? C.primary)} strokeWidth={focused ? 2.2 : 1.7} />
+  );
+  return TabBarIcon;
+};
 
 export default function TabsLayout() {
   const { t } = useI18n();

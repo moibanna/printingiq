@@ -58,7 +58,7 @@ export default function QuoteScreen() {
             {total && <Text style={{ fontWeight: '700', color: C.text, fontSize: 13 }}>{t('estTotal')}: <Text style={{ color: C.primary, fontWeight: '700' }}>{total}</Text></Text>}
             <View style={s.row}>
               <Button
-                variant="whatsapp" icon="whatsapp" title={t('sendWhatsApp')} disabled={!v} style={{ flexGrow: 1 }}
+                variant="whatsapp" icon="whatsapp" title={t('sendWhatsApp')} disabled={!v?.phone} style={{ flexGrow: 1 }}
                 onPress={() => v && setSending({
                   vendor: v,
                   items: list.map((x) => ({ productId: x.product.id, name: tl(x.product.name), sku: x.product.sku, qty: x.qty, unitLabel: t(unitKey(x.product.unit)) })),

@@ -45,6 +45,19 @@ type Store = {
 
 const Ctx = createContext<Store | null>(null);
 
+type Loaded = { products: Product[]; vendors: Vendor[]; me: Vendor | null; email: string | null; leads: Lead[] };
+async function loadAll(): Promise<Loaded | null> {
+  try {
+    const [products, vendors, me, email] = await Promise.all([
+      backend.listProducts(), backend.listVendors(), backend.getMyVendor(), backend.currentUserEmail(),
+    ]);
+    return { products, vendors, me, email, leads: me ? await backend.listMyLeads() : [] };
+  } catch (err) {
+    console.warn('Failed to load data', err);
+    return null;
+  }
+}
+
 function usePersisted<T>(key: string, initial: T) {
   const [v, setV] = useState<T>(initial);
   useEffect(() => {
@@ -98,21 +111,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [customerBox, setCustomerBox] = usePersisted<Customer | null>('printingiq.customer', null);
   const alertTitle = useRef('PrintingIQ');
 
-  const refresh = useCallback(async () => {
-    try {
-      const [p, v, m, e] = await Promise.all([
-        backend.listProducts(), backend.listVendors(), backend.getMyVendor(), backend.currentUserEmail(),
-      ]);
-      setProducts(p); setVendorList(v); setMe(m); setEmail(e);
-      setLeads(m ? await backend.listMyLeads() : []);
-    } catch (err) {
-      console.warn('Failed to load data', err);
-    } finally {
-      setLoading(false);
-    }
+  const apply = useCallback((d: Loaded | null) => {
+    if (d) { setProducts(d.products); setVendorList(d.vendors); setMe(d.me); setEmail(d.email); setLeads(d.leads); }
+    setLoading(false);
   }, []);
+  const refresh = useCallback(async () => apply(await loadAll()), [apply]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    let alive = true;
+    loadAll().then((d) => alive && apply(d));
+    return () => { alive = false; };
+  }, [apply]);
 
   // While a vendor is signed in: live inquiries + push registration
   useEffect(() => {

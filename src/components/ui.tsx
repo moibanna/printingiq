@@ -1,7 +1,7 @@
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect, useState } from 'react';
 import { Image, Linking, Platform, Pressable, ScrollView, StyleSheet, TextInputProps, useWindowDimensions, View, ViewStyle } from 'react-native';
-import { Category, categoryById, CITIES, ColorOption, Group, GROUPS, Product, tintOf, Vendor } from '../lib/catalog';
+import { Category, CITIES, ColorOption, Group, GROUPS, Product, tintOf, Vendor } from '../lib/catalog';
 import { formatPrice, unitKey } from '../lib/format';
 import { LANG_LABEL, LANGS, StringKey, useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
@@ -122,7 +122,6 @@ export function LangSwitcher({ compact }: { compact?: boolean }) {
 export function SearchBox({ initial = '', onSubmit, autoFocus }: { initial?: string; onSubmit?: (q: string) => void; autoFocus?: boolean }) {
   const { t, rtl } = useI18n();
   const [q, setQ] = useState(initial);
-  useEffect(() => setQ(initial), [initial]);
   const go = () => (onSubmit ? onSubmit(q) : router.push({ pathname: '/search', params: { q } }));
   return (
     <View style={s.search}>
@@ -311,7 +310,7 @@ export function Swatches({ colors, size = 22, selected, onToggle }: {
 
 /** Product image, or a placeholder built from the category icon and the product's colors. */
 export function ProductThumb({ product, height }: { product: Product; height: number }) {
-  if (product.images[0]) return <Image source={{ uri: product.images[0] }} style={{ height, width: '100%', backgroundColor: '#eee' }} resizeMode="cover" />;
+  if (product.images[0]) return <Image source={{ uri: product.images[0] }} style={{ height, width: '100%', backgroundColor: '#fff' }} resizeMode="contain" />;
   const stripes = product.colors.slice(0, 6);
   return (
     <View style={{ height, backgroundColor: tintOf(product.categoryId), alignItems: 'center', justifyContent: 'center' }}>

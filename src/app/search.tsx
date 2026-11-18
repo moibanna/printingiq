@@ -9,7 +9,7 @@ export default function SearchScreen() {
   const { products } = useStore();
   return (
     <Screen>
-      <SearchBox initial={q} autoFocus={!q} onSubmit={(v) => router.setParams({ q: v })} />
+      <SearchBox key={q} initial={q} autoFocus={!q} onSubmit={(v) => router.setParams({ q: v })} />
       <ProductBrowser key={q} products={searchProducts(products, q)} />
     </Screen>
   );

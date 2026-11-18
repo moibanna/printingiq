@@ -132,6 +132,8 @@ const strings = {
   waGreeting: { en: 'Hello {vendor}, I found your product on PrintingIQ:', ar: 'مرحباً {vendor}، وجدت منتجك على PrintingIQ:', ckb: 'سڵاو {vendor}، بەرهەمەکەتم لە PrintingIQ بینی:' },
   waMyName: { en: 'My name', ar: 'اسمي', ckb: 'ناوم' },
   replyGreeting: { en: 'Hello {name}, this is {shop}. Thank you for your inquiry on PrintingIQ.', ar: 'مرحباً {name}، معك {shop}. شكراً لاستفسارك عبر PrintingIQ.', ckb: 'سڵاو {name}، من {shop}م. سوپاس بۆ داواکارییەکەت لە PrintingIQ.' },
+  noContact: { en: 'This vendor hasn’t added contact details yet.', ar: 'لم يضف هذا البائع معلومات التواصل بعد.', ckb: 'ئەم فرۆشیارە هێشتا زانیاری پەیوەندی زیاد نەکردووە.' },
+  showMore: { en: 'Show more', ar: 'عرض المزيد', ckb: 'زیاتر نیشان بدە' },
   soldBy: { en: 'Sold by', ar: 'يبيعه', ckb: 'فرۆشیار' },
   productsCount: { en: 'products', ar: 'منتج', ckb: 'بەرهەم' },
   allProducts: { en: 'All products', ar: 'كل المنتجات', ckb: 'هەموو بەرهەمەکان' },

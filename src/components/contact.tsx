@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Lead, Vendor } from '../lib/catalog';
 import { intlPhone } from '../lib/format';
@@ -20,15 +20,11 @@ export function ContactSheet({ vendor, items, visible, onClose, quote }: {
 }) {
   const { t, tl } = useI18n();
   const { customer, sendLead } = useStore();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  // Parents mount the sheet only while it is open, so it always starts fresh from the remembered customer.
+  const [name, setName] = useState(customer?.name ?? '');
+  const [phone, setPhone] = useState(customer?.phone ?? '');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (visible && customer) { setName((n) => n || customer.name); setPhone((p) => p || customer.phone); }
-    if (visible) setError('');
-  }, [visible, customer]);
 
   const wa = intlPhone(vendor.whatsapp || vendor.phone);
   const tel = intlPhone(vendor.phone);

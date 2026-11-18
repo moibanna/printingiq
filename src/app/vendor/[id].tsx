@@ -34,23 +34,25 @@ export default function VendorScreen() {
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Icon name="pin" size={14} color={C.muted} /><Muted>{cityName(v.city, tl)}</Muted>
+              <Icon name="pin" size={14} color={C.muted} /><Muted>{v.city ? cityName(v.city, tl) : '—'}</Muted>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Icon name="whatsapp" size={14} color={C.success} />
-              <Text style={{ direction: 'ltr', fontSize: 13, color: C.text } as object}>+{intlPhone(v.whatsapp || v.phone)}</Text>
-            </View>
+            {v.phone ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="whatsapp" size={14} color={C.success} />
+                <Text style={{ direction: 'ltr', fontSize: 13, color: C.text } as object}>+{intlPhone(v.whatsapp || v.phone)}</Text>
+              </View>
+            ) : <Muted>{t('noContact')}</Muted>}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="grid" size={14} color={C.muted} /><Muted>{list.length} {t('productsCount')}</Muted>
             </View>
           </View>
           {v.about ? <Text style={{ color: C.text, fontSize: 13, lineHeight: 24 }}>{v.about}</Text> : null}
         </View>
-        {me?.id !== v.id && <Button variant="whatsapp" icon="whatsapp" title={t('contactVendor')} onPress={() => setContact(true)} />}
+        {me?.id !== v.id && !!v.phone && <Button variant="whatsapp" icon="whatsapp" title={t('contactVendor')} onPress={() => setContact(true)} />}
       </View>
 
-      <ProductBrowser products={list} />
-      <ContactSheet vendor={v} visible={contact} onClose={() => setContact(false)} items={[{ productId: '', name: `${v.name} — PrintingIQ` }]} />
+      <ProductBrowser key={v.id} products={list} />
+      {contact && <ContactSheet vendor={v} visible={contact} onClose={() => setContact(false)} items={[{ productId: '', name: `${v.name} — PrintingIQ` }]} />}
     </Screen>
   );
 }

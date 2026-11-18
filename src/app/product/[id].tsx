@@ -7,7 +7,7 @@ import { Text, TextInput } from '../../components/text';
 import { AvailabilityBadge, Button, Chip, cityName, FavButton, H, Muted, ProductThumb, s, Screen, Swatches } from '../../components/ui';
 import { categoryById, groupById } from '../../lib/catalog';
 import { formatPrice, intlPhone, unitKey } from '../../lib/format';
-import { StringKey, useI18n } from '../../lib/i18n';
+import { useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
 import { C } from '../../lib/theme';
 
@@ -29,14 +29,6 @@ export default function ProductScreen() {
   const inQuote = quote.find((q) => q.productId === p.id);
   const minQ = p.minOrder ?? 1;
   const mine = me?.id === p.vendorId;
-
-  const Row = ({ k, val }: { k: StringKey; val?: string | number }) =>
-    val ? (
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderColor: C.border }}>
-        <Muted>{t(k)}</Muted>
-        <Text style={{ fontWeight: '600', color: C.text, fontSize: 13 }}>{val}</Text>
-      </View>
-    ) : null;
 
   const VendorCard = v ? (
     <View style={[s.panel, { borderColor: C.primary, borderWidth: 1.5 }]}>
@@ -62,6 +54,7 @@ export default function ProductScreen() {
         </View>
         <Button small variant="ghost" title={t('viewShop')} onPress={() => router.push(`/vendor/${v.id}`)} />
       </View>
+      {!v.phone ? <Muted style={{ fontSize: 12 }}>{t('noContact')}</Muted> : (
       <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Icon name="whatsapp" size={15} color={C.success} />
@@ -72,7 +65,8 @@ export default function ProductScreen() {
           <Text style={{ direction: 'ltr', fontSize: 13, color: C.text } as object}>+{intlPhone(v.phone)}</Text>
         </View>
       </View>
-      {!mine && (
+      )}
+      {!mine && !!v.phone && (
         <View style={[s.row, { marginTop: 4 }]}>
           <Button variant="whatsapp" icon="whatsapp" title={t('whatsapp')} style={{ flex: 1 }} onPress={() => setContact(true)} />
           <Button variant="outline" icon="phone" title={t('call')} style={{ flex: 1 }} onPress={() => setContact(true)} />
@@ -89,7 +83,7 @@ export default function ProductScreen() {
           <View style={{ borderRadius: 14, overflow: 'hidden' }}>
             {p.images.length > 1 ? (
               <ScrollView horizontal pagingEnabled>
-                {p.images.map((u) => <Image key={u} source={{ uri: u }} style={{ width: wide ? 520 : width - 32, height: 320 }} />)}
+                {p.images.map((u) => <Image key={u} source={{ uri: u }} resizeMode="contain" style={{ width: wide ? 520 : width - 32, height: 320, backgroundColor: '#fff' }} />)}
               </ScrollView>
             ) : (
               <ProductThumb product={p} height={wide ? 380 : 240} />
@@ -142,10 +136,10 @@ export default function ProductScreen() {
           )}
 
           <View style={s.panel}>
-            <Row k="brand" val={p.brand} />
-            <Row k="origin" val={p.origin} />
-            <Row k="minOrder" val={p.minOrder ? `${p.minOrder} ${t(unitKey(p.unit))}` : undefined} />
-            <Row k="stock" val={
+            <InfoRow label={t('brand')} val={p.brand} />
+            <InfoRow label={t('origin')} val={p.origin} />
+            <InfoRow label={t('minOrder')} val={p.minOrder ? `${p.minOrder} ${t(unitKey(p.unit))}` : undefined} />
+            <InfoRow label={t('stock')} val={
               p.availability === 'in_stock' ? `${t('inStock')}${p.stockQty != null ? ` · ${p.stockQty} ${t(unitKey(p.unit))}` : ''}`
               : p.availability === 'custom_order' ? t('customOrder') : t('outOfStock')} />
           </View>
@@ -158,7 +152,7 @@ export default function ProductScreen() {
         </View>
       </View>
 
-      {v && (
+      {v && contact && (
         <ContactSheet
           vendor={v}
           visible={contact}
@@ -167,6 +161,16 @@ export default function ProductScreen() {
         />
       )}
     </Screen>
+  );
+}
+
+function InfoRow({ label, val }: { label: string; val?: string | number }) {
+  if (!val) return null;
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderColor: C.border }}>
+      <Muted>{label}</Muted>
+      <Text style={{ fontWeight: '600', color: C.text, fontSize: 13 }}>{val}</Text>
+    </View>
   );
 }
 
