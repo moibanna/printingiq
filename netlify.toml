@@ -1,0 +1,5 @@
+# This repository currently contains no application code or package.json,
+# so there is nothing to compile. Netlify publishes the repository root as-is.
+# Once an app is added, set `command` and `publish` to match its build.
+[build]
+  publish = "."
