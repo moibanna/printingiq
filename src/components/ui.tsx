@@ -1,14 +1,13 @@
 import { Link, router } from 'expo-router';
 import { ReactNode, useEffect, useState } from 'react';
-import {
-  Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TextInputProps, useWindowDimensions, View,
-  ViewStyle,
-} from 'react-native';
-import { Category, categoryById, ColorOption, Group, GROUPS, Product, tintOf } from '../lib/catalog';
+import { Image, Linking, Platform, Pressable, ScrollView, StyleSheet, TextInputProps, useWindowDimensions, View, ViewStyle } from 'react-native';
+import { Category, categoryById, CITIES, ColorOption, Group, GROUPS, Product, tintOf, Vendor } from '../lib/catalog';
 import { formatPrice, unitKey } from '../lib/format';
 import { LANG_LABEL, LANGS, StringKey, useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { C, MAX_W, R } from '../lib/theme';
+import { Icon, IconName } from './icons';
+import { Text, TextInput } from './text';
 
 /** Platform support number shown in the top bar and footer. Replace with your own. */
 export const SUPPORT_PHONE = '9647500000000';
@@ -37,57 +36,63 @@ export const H = ({ children, style }: { children: ReactNode; style?: object }) 
 export const Muted = ({ children, style }: { children: ReactNode; style?: object }) => <Text style={[s.muted, style]}>{children}</Text>;
 
 /** Section heading with a tinted label and a rule, plus an optional "See all" link. */
-export function SectionTitle({ title, href }: { title: string; href?: string }) {
+export function SectionTitle({ title, href, icon }: { title: string; href?: string; icon?: string }) {
   const { t, arrow } = useI18n();
   return (
     <View style={s.sectionRow}>
-      <View style={s.sectionPill}><Text style={s.sectionText}>{title}</Text></View>
+      <View style={[s.sectionPill, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+        {icon && <Icon name={icon} size={18} color={C.primary} />}
+        <Text style={s.sectionText}>{title}</Text>
+      </View>
       <View style={{ flex: 1 }} />
       {href && (
         <Link href={href as never} asChild>
-          <Pressable><Text style={{ color: C.primary, fontWeight: '700' }}>{t('seeAll')} {arrow}</Text></Pressable>
+          <Pressable><Text style={{ color: C.primary, fontWeight: '700', fontSize: 13 }}>{t('seeAll')} {arrow}</Text></Pressable>
         </Link>
       )}
     </View>
   );
 }
 
-export function Button({ title, onPress, variant = 'primary', style, disabled, small }: {
-  title: string; onPress?: () => void; variant?: 'primary' | 'accent' | 'outline' | 'whatsapp' | 'danger' | 'white';
-  style?: ViewStyle; disabled?: boolean; small?: boolean;
+type BtnVariant = 'primary' | 'accent' | 'outline' | 'whatsapp' | 'danger' | 'white' | 'ghost';
+export function Button({ title, onPress, variant = 'primary', style, disabled, small, icon }: {
+  title: string; onPress?: () => void; variant?: BtnVariant; style?: ViewStyle; disabled?: boolean; small?: boolean; icon?: IconName;
 }) {
-  const bg = { primary: C.primary, accent: C.accent, outline: 'transparent', whatsapp: C.whatsapp, danger: '#FEE4E2', white: '#fff' }[variant];
-  const fg = { primary: '#fff', accent: '#fff', outline: C.primary, whatsapp: '#fff', danger: '#B42318', white: C.primary }[variant];
+  const bg = { primary: C.primary, accent: C.accent, outline: 'transparent', whatsapp: C.whatsapp, danger: '#FEE4E2', white: '#fff', ghost: C.primarySoft }[variant];
+  const fg = { primary: '#fff', accent: '#fff', outline: C.primary, whatsapp: '#fff', danger: '#B42318', white: C.primary, ghost: C.primary }[variant];
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [s.btn, small && { paddingVertical: 8, paddingHorizontal: 12 }, { backgroundColor: bg, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 },
+      style={({ pressed }) => [s.btn, small && { paddingVertical: 7, paddingHorizontal: 12 }, { backgroundColor: bg, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 },
         variant === 'outline' && { borderWidth: 1, borderColor: C.primary }, style]}
     >
+      {icon && <Icon name={icon} size={small ? 15 : 18} color={fg} />}
       <Text style={[s.btnText, small && { fontSize: 13 }, { color: fg }]}>{title}</Text>
     </Pressable>
   );
 }
 
-export function Chip({ label, active, onPress, dot }: { label: string; active?: boolean; onPress?: () => void; dot?: string }) {
+export function Chip({ label, active, onPress, dot, icon }: { label: string; active?: boolean; onPress?: () => void; dot?: string; icon?: string }) {
   return (
-    <Pressable onPress={onPress} style={[s.chip, { flexDirection: 'row', alignItems: 'center', gap: 6 }, active && { backgroundColor: C.primary, borderColor: C.primary }]}>
+    <Pressable onPress={onPress} style={[s.chip, active && { backgroundColor: C.primary, borderColor: C.primary }]}>
       {dot && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: dot, borderWidth: 1, borderColor: '#D0D5DD' }} />}
+      {icon && <Icon name={icon} size={15} color={active ? '#fff' : C.primary} />}
       <Text style={[s.chipText, active && { color: '#fff' }]}>{label}</Text>
     </Pressable>
   );
 }
 
-export function Field({ label, hint, ...props }: TextInputProps & { label: string; hint?: string }) {
+export function Field({ label, hint, ltr, ...props }: TextInputProps & { label: string; hint?: string; ltr?: boolean }) {
   const { rtl } = useI18n();
+  const right = rtl && !ltr;
   return (
     <View style={{ marginBottom: 12 }}>
       <Text style={s.label}>{label}</Text>
       <TextInput
         placeholderTextColor="#98A2B3"
         {...props}
-        style={[s.input, props.multiline && { minHeight: 80, textAlignVertical: 'top' }, { textAlign: rtl ? 'right' : 'left' }, props.style]}
+        style={[s.input, props.multiline && { minHeight: 84, textAlignVertical: 'top' }, { textAlign: right ? 'right' : 'left', writingDirection: right ? 'rtl' : 'ltr' }, props.style]}
       />
       {hint ? <Text style={[s.muted, { marginTop: 4, fontSize: 12 }]}>{hint}</Text> : null}
     </View>
@@ -121,7 +126,7 @@ export function SearchBox({ initial = '', onSubmit, autoFocus }: { initial?: str
   const go = () => (onSubmit ? onSubmit(q) : router.push({ pathname: '/search', params: { q } }));
   return (
     <View style={s.search}>
-      <Text style={{ fontSize: 16, opacity: 0.6 }}>🔍</Text>
+      <View style={{ flexShrink: 0 }}><Icon name="search" size={18} color={C.muted} /></View>
       <TextInput
         value={q}
         onChangeText={setQ}
@@ -130,17 +135,17 @@ export function SearchBox({ initial = '', onSubmit, autoFocus }: { initial?: str
         autoFocus={autoFocus}
         placeholder={t('search')}
         placeholderTextColor="#98A2B3"
-        style={{ flex: 1, fontSize: 15, color: C.text, paddingVertical: 10, textAlign: rtl ? 'right' : 'left', outlineStyle: 'none' } as object}
+        style={{ flex: 1, minWidth: 0, width: '100%', fontSize: 14, color: C.text, paddingVertical: 9, textAlign: rtl ? 'right' : 'left', outlineStyle: 'none' } as object}
       />
     </View>
   );
 }
 
-function IconBadge({ glyph, count, href, label }: { glyph: string; count: number; href: string; label: string }) {
+function IconBadge({ icon, count, href, label }: { icon: IconName; count: number; href: string; label: string }) {
   return (
     <Link href={href as never} asChild>
-      <Pressable accessibilityLabel={label} style={{ padding: 6 }}>
-        <Text style={{ fontSize: 22 }}>{glyph}</Text>
+      <Pressable accessibilityLabel={label} style={{ padding: 8 }}>
+        <Icon name={icon} size={23} color={C.primary} />
         {count > 0 && <View style={s.badge}><Text style={s.badgeText}>{count}</Text></View>}
       </Pressable>
     </Link>
@@ -150,42 +155,54 @@ function IconBadge({ glyph, count, href, label }: { glyph: string; count: number
 export function Logo({ light }: { light?: boolean }) {
   return (
     <Link href="/" asChild>
-      <Pressable style={{ flexDirection: 'row', alignItems: 'baseline', direction: 'ltr' } as object}>
-        <Text style={{ fontSize: 24, fontWeight: '900', color: light ? '#fff' : C.primary, letterSpacing: -0.5 }}>Printing</Text>
-        <Text style={{ fontSize: 24, fontWeight: '900', color: C.accent, letterSpacing: -0.5 }}>IQ</Text>
+      <Pressable style={{ flexDirection: 'row', alignItems: 'center', direction: 'ltr', gap: 6 } as object}>
+        <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="machines" size={18} color="#fff" strokeWidth={2.2} />
+        </View>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: light ? '#fff' : C.primary }}>
+          Printing<Text style={{ color: C.accent, fontWeight: '800', fontSize: 20 }}>IQ</Text>
+        </Text>
       </Pressable>
     </Link>
   );
 }
 
-/** Website header for desktop: contact/language bar, then logo, nav, search, favorites and quote list. */
+/** Website header for desktop: contact/language bar, then logo, nav, search, favorites, quote list and account. */
 export function WebHeader() {
   const { t } = useI18n();
-  const { favorites, quote } = useStore();
-  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['sell', '/sell'], ['account', '/account']];
+  const { favorites, quote, unread, me } = useStore();
+  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['sell', '/sell']];
   return (
     <View style={{ backgroundColor: '#fff', borderBottomWidth: 1, borderColor: C.border }}>
       <View style={{ backgroundColor: C.accentSoft }}>
         <View style={[s.wrap, { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 16 }]}>
           <LangSwitcher compact />
           <View style={{ flex: 1 }} />
-          <Pressable onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}`)}>
-            <Text style={{ fontSize: 13, color: C.text, direction: 'ltr' } as object}>💬 +{SUPPORT_PHONE}</Text>
+          <Pressable onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="whatsapp" size={15} color={C.success} />
+            <Text style={{ fontSize: 12, color: C.text, direction: 'ltr' } as object}>+{SUPPORT_PHONE}</Text>
           </Pressable>
         </View>
       </View>
-      <View style={[s.wrap, { flexDirection: 'row', alignItems: 'center', gap: 24, paddingVertical: 12 }]}>
+      <View style={[s.wrap, { flexDirection: 'row', alignItems: 'center', gap: 20, paddingVertical: 10 }]}>
         <Logo />
-        <View style={{ flexDirection: 'row', gap: 4 }}>
+        <View style={{ flexDirection: 'row', gap: 2 }}>
           {nav.map(([k, href]) => (
             <Link key={k} href={href as never} asChild>
-              <Pressable style={s.navLink}><Text style={{ color: C.text, fontWeight: '600', fontSize: 14 }}>{t(k)}</Text></Pressable>
+              <Pressable style={s.navLink}><Text style={{ color: C.text, fontWeight: '600', fontSize: 13 }}>{t(k)}</Text></Pressable>
             </Link>
           ))}
         </View>
         <View style={{ flex: 1 }}><SearchBox /></View>
-        <IconBadge glyph="♡" count={favorites.length} href="/favorites" label={t('favorites')} />
-        <IconBadge glyph="🛒" count={quote.length} href="/quote" label={t('quoteList')} />
+        <IconBadge icon="heart" count={favorites.length} href="/favorites" label={t('favorites')} />
+        <IconBadge icon="cart" count={quote.length} href="/quote" label={t('quoteList')} />
+        <Link href="/account" asChild>
+          <Pressable style={flat(s.navLink, { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primarySoft })}>
+            <Icon name={me ? 'store' : 'user'} size={18} color={C.primary} />
+            <Text style={{ color: C.primary, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>{me ? me.name : t('vendorAccount')}</Text>
+            {unread > 0 && <View style={[s.badge, { position: 'relative', top: 0, end: 0 }]}><Text style={s.badgeText}>{unread}</Text></View>}
+          </Pressable>
+        </Link>
       </View>
     </View>
   );
@@ -198,12 +215,15 @@ export function Footer() {
       <View style={[s.wrap, { flexDirection: 'row', flexWrap: 'wrap', gap: 40, paddingVertical: 36 }]}>
         <View style={{ flex: 1.3, minWidth: 220, gap: 10 }}>
           <Logo light />
-          <Text style={{ color: '#C9D6E8', lineHeight: 22 }}>{t('footerAbout')}</Text>
-          <Text style={{ color: '#fff', direction: 'ltr' } as object}>📞 +{SUPPORT_PHONE}</Text>
+          <Text style={{ color: '#C9D6E8', lineHeight: 24, fontSize: 13 }}>{t('footerAbout')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="phone" size={15} color="#fff" />
+            <Text style={{ color: '#fff', direction: 'ltr', fontSize: 13 } as object}>+{SUPPORT_PHONE}</Text>
+          </View>
         </View>
         <View style={{ flex: 1, minWidth: 160, gap: 8 }}>
           <Text style={s.footHead}>{t('quickLinks')}</Text>
-          {([['home', '/'], ['allProducts', '/search'], ['sell', '/sell'], ['quoteList', '/quote']] as [StringKey, string][]).map(([k, h]) => (
+          {([['home', '/'], ['allProducts', '/search'], ['sell', '/sell'], ['quoteList', '/quote'], ['vendorAccount', '/account']] as [StringKey, string][]).map(([k, h]) => (
             <Link key={k} href={h as never}><Text style={s.footLink}>{t(k)}</Text></Link>
           ))}
         </View>
@@ -219,14 +239,14 @@ export function Footer() {
   );
 }
 
-/** Rotating banner on the home page. Slides are text + icons, so no stock photos are needed. */
+/** Rotating banner on the home page, illustrated with line icons. */
 export function HeroSlider() {
   const { t, arrow } = useI18n();
   const wide = useWide();
-  const slides: { title: StringKey; sub: StringKey; href: string; art: string; bg: string }[] = [
-    { title: 'hero1Title', sub: 'hero1Sub', href: '/category/sign', art: '🟦 ⬜ 🧻', bg: C.primary },
-    { title: 'hero2Title', sub: 'hero2Sub', href: '/category/machines', art: '🖨️ ⚡ ✂️', bg: '#123F2F' },
-    { title: 'hero3Title', sub: 'hero3Sub', href: '/category/promo', art: '☕ 📓 🏆', bg: '#5A2A0C' },
+  const slides: { title: StringKey; sub: StringKey; href: string; art: IconName[]; bg: string }[] = [
+    { title: 'hero1Title', sub: 'hero1Sub', href: '/category/sign', art: ['acrylic', 'flex', 'vinyl'], bg: C.primary },
+    { title: 'hero2Title', sub: 'hero2Sub', href: '/category/machines', art: ['large-format', 'laser-cnc', 'plotter'], bg: '#123F2F' },
+    { title: 'hero3Title', sub: 'hero3Sub', href: '/category/promo', art: ['mugs', 'notebooks', 'trophies'], bg: '#5A2A0C' },
   ];
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -236,20 +256,26 @@ export function HeroSlider() {
   const sl = slides[i];
   return (
     <View>
-      <View style={[s.hero, { backgroundColor: sl.bg, minHeight: wide ? 260 : 190 }]}>
+      <View style={[s.hero, { backgroundColor: sl.bg, minHeight: wide ? 250 : 180 }]}>
         <View style={[s.heroBlob, { width: 220, height: 220, top: -60, end: -40 }]} />
-        <View style={[s.heroBlob, { width: 14, height: 14, bottom: 28, end: 40, backgroundColor: C.accent, opacity: 1 }]} />
-        <View style={[s.heroBlob, { width: 8, height: 8, bottom: 56, end: 70, backgroundColor: C.accent, opacity: 0.7 }]} />
         <View style={{ flex: 1, gap: 10, zIndex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: wide ? 34 : 22, fontWeight: '900' }}>{t(sl.title)}</Text>
-          <Text style={{ color: '#DCE6F2', fontSize: wide ? 16 : 14, maxWidth: 520 }}>{t(sl.sub)}</Text>
+          <Text style={{ color: '#fff', fontSize: wide ? 30 : 20, fontWeight: '800', lineHeight: wide ? 50 : 34 }}>{t(sl.title)}</Text>
+          <Text style={{ color: '#DCE6F2', fontSize: wide ? 15 : 13, maxWidth: 520, lineHeight: 24 }}>{t(sl.sub)}</Text>
           <Link href={sl.href as never} asChild>
             <Pressable style={flat(s.btn, { backgroundColor: C.accent, alignSelf: 'flex-start', marginTop: 6 })}>
               <Text style={[s.btnText, { color: '#fff' }]}>{t('shopNow')} {arrow}</Text>
             </Pressable>
           </Link>
         </View>
-        {wide && <Text style={{ fontSize: 72, zIndex: 1 }}>{sl.art}</Text>}
+        {wide && (
+          <View style={{ flexDirection: 'row', gap: 16, zIndex: 1 }}>
+            {sl.art.map((a) => (
+              <View key={a} style={{ width: 92, height: 92, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={a} size={46} color="#fff" strokeWidth={1.5} />
+              </View>
+            ))}
+          </View>
+        )}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 }}>
         {slides.map((_, k) => (
@@ -285,12 +311,11 @@ export function Swatches({ colors, size = 22, selected, onToggle }: {
 
 /** Product image, or a placeholder built from the category icon and the product's colors. */
 export function ProductThumb({ product, height }: { product: Product; height: number }) {
-  const cat = categoryById(product.categoryId);
   if (product.images[0]) return <Image source={{ uri: product.images[0] }} style={{ height, width: '100%', backgroundColor: '#eee' }} resizeMode="cover" />;
   const stripes = product.colors.slice(0, 6);
   return (
     <View style={{ height, backgroundColor: tintOf(product.categoryId), alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: height * 0.34 }}>{cat?.icon ?? '📦'}</Text>
+      <Icon name={product.categoryId} size={Math.round(height * 0.36)} color={C.primary} strokeWidth={1.3} />
       {stripes.length > 0 && (
         <View style={{ position: 'absolute', bottom: 0, start: 0, end: 0, height: 6, flexDirection: 'row' }}>
           {stripes.map((c) => <View key={c.hex} style={{ flex: 1, backgroundColor: c.hex }} />)}
@@ -306,7 +331,7 @@ export function AvailabilityBadge({ product }: { product: Product }) {
   const out = product.availability === 'out_of_stock';
   return (
     <View style={[s.availBadge, { backgroundColor: out ? C.danger : C.accent }]}>
-      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{out ? t('outOfStock') : t('customOrder')}</Text>
+      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{out ? t('outOfStock') : t('customOrder')}</Text>
     </View>
   );
 }
@@ -316,14 +341,36 @@ export function FavButton({ id, style }: { id: string; style?: ViewStyle }) {
   const on = favorites.includes(id);
   return (
     <Pressable onPress={() => toggleFavorite(id)} hitSlop={8} style={[s.favBtn, style]} accessibilityLabel="favorite">
-      <Text style={{ fontSize: 16, color: on ? C.accent : C.muted }}>{on ? '♥' : '♡'}</Text>
+      <Icon name="heart" size={16} color={on ? C.accent : C.muted} strokeWidth={on ? 2.6 : 1.8} />
     </Pressable>
+  );
+}
+
+export const cityName = (city: string, tl: ReturnType<typeof useI18n>['tl']) => {
+  const c = CITIES.find((x) => x.en === city);
+  return c ? tl(c) : city;
+};
+
+/** "Shop name ✓ · City" line used on cards. */
+export function VendorLine({ vendor, small }: { vendor?: Vendor; small?: boolean }) {
+  const { tl } = useI18n();
+  if (!vendor) return null;
+  return (
+    <Link href={`/vendor/${vendor.id}`} asChild>
+      <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <Icon name="store" size={small ? 12 : 14} color={C.muted} />
+        <Text numberOfLines={1} style={{ fontSize: small ? 11 : 13, color: C.muted, flexShrink: 1 }}>
+          {vendor.name}{vendor.city ? ` · ${cityName(vendor.city, tl)}` : ''}
+        </Text>
+        {vendor.verified && <Icon name="verified" size={small ? 12 : 14} color={C.success} />}
+      </Pressable>
+    </Link>
   );
 }
 
 export function ProductCard({ product }: { product: Product }) {
   const { t, tl, lang } = useI18n();
-  const { addToQuote, quote } = useStore();
+  const { addToQuote, quote, vendors } = useStore();
   const price = formatPrice(product, lang);
   const inQuote = quote.some((q) => q.productId === product.id);
   const out = product.availability === 'out_of_stock';
@@ -332,7 +379,7 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/product/${product.id}`} asChild>
         <Pressable style={{ flex: 1 }}>
           <ProductThumb product={product} height={130} />
-          <View style={{ paddingHorizontal: 10, paddingTop: 10, gap: 4 }}>
+          <View style={{ paddingHorizontal: 10, paddingTop: 8, gap: 3 }}>
             <Text numberOfLines={2} style={s.cardTitle}>{tl(product.name)}</Text>
             {product.sku ? <Text style={s.code}>{t('code')}: {product.sku}</Text> : null}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 16, gap: 6 }}>
@@ -342,18 +389,19 @@ export function ProductCard({ product }: { product: Product }) {
           </View>
         </Pressable>
       </Link>
+      <View style={{ paddingHorizontal: 10, paddingTop: 4 }}><VendorLine vendor={vendors[product.vendorId]} small /></View>
       <View style={s.cardFoot}>
         <Text style={s.price} numberOfLines={1}>
           {price ?? t('askPrice')}
-          {price ? <Text style={{ fontSize: 11, color: C.muted, fontWeight: '500' }}> / {t(unitKey(product.unit))}</Text> : null}
+          {price ? <Text style={{ fontSize: 10, color: C.muted }}> / {t(unitKey(product.unit))}</Text> : null}
         </Text>
         <Pressable
           disabled={out}
-          onPress={() => addToQuote(product.id)}
+          onPress={() => addToQuote(product.id, product.minOrder ?? 1)}
           accessibilityLabel={t('addToQuote')}
           style={[s.cartBtn, inQuote && { backgroundColor: C.success }, out && { opacity: 0.35 }]}
         >
-          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>{inQuote ? '✓' : '🛒'}</Text>
+          <Icon name={inQuote ? 'check' : 'cart'} size={16} color="#fff" strokeWidth={2.2} />
         </Pressable>
       </View>
       <AvailabilityBadge product={product} />
@@ -383,17 +431,19 @@ export function ProductGrid({ products }: { products: Product[] }) {
   );
 }
 
-/** Large tile for a main category group: tinted art area with a label bar underneath. */
+/** Large tile for a main category group: tinted icon area with a label bar underneath. */
 export function GroupTile({ group, count }: { group: Group; count?: number }) {
   const { tl } = useI18n();
   return (
     <Link href={`/category/${group.id}`} asChild>
       <Pressable style={flat(s.groupTile)}>
-        <View style={{ height: 110, backgroundColor: group.tint, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 48 }}>{group.icon}</Text>
+        <View style={{ height: 104, backgroundColor: group.tint, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.75)', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name={group.id} size={32} color={C.primary} strokeWidth={1.6} />
+          </View>
         </View>
-        <View style={{ backgroundColor: '#F1F3F6', paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center' }}>
-          <Text numberOfLines={1} style={{ fontWeight: '700', color: C.text, fontSize: 14 }}>{tl(group.name)}</Text>
+        <View style={{ backgroundColor: '#F1F3F6', paddingVertical: 8, paddingHorizontal: 8, alignItems: 'center' }}>
+          <Text numberOfLines={1} style={{ fontWeight: '700', color: C.text, fontSize: 13 }}>{tl(group.name)}</Text>
           {count != null && <Text style={{ color: C.muted, fontSize: 11 }}>{count}</Text>}
         </View>
       </Pressable>
@@ -407,11 +457,11 @@ export function SubTile({ category, count }: { category: Category; count?: numbe
   return (
     <Link href={`/category/${category.id}`} asChild>
       <Pressable style={flat(s.subTile)}>
-        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: tintOf(category.id), alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 30 }}>{category.icon}</Text>
+        <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: tintOf(category.id), alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={category.id} size={26} color={C.primary} strokeWidth={1.6} />
         </View>
-        <Text numberOfLines={2} style={{ fontSize: 12, fontWeight: '600', color: C.text, textAlign: 'center' }}>{tl(category.name)}</Text>
-        {count ? <Text style={{ fontSize: 11, color: C.muted }}>{count}</Text> : null}
+        <Text numberOfLines={2} style={{ fontSize: 11, fontWeight: '600', color: C.text, textAlign: 'center' }}>{tl(category.name)}</Text>
+        {count ? <Text style={{ fontSize: 10, color: C.muted }}>{count}</Text> : null}
       </Pressable>
     </Link>
   );
@@ -419,14 +469,50 @@ export function SubTile({ category, count }: { category: Category; count?: numbe
 
 export function VendorCta() {
   const { t } = useI18n();
+  const { me } = useStore();
   return (
     <View style={s.cta}>
       <View style={[s.heroBlob, { width: 180, height: 180, top: -70, start: -50, opacity: 0.12 }]} />
-      <View style={{ flex: 1, minWidth: 220, gap: 6 }}>
-        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '800' }}>{t('vendorCtaTitle')}</Text>
-        <Text style={{ color: '#DCE6F2' }}>{t('vendorCtaBody')}</Text>
+      <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="store" size={28} color="#fff" />
       </View>
-      <Button variant="white" title={t('vendorCtaButton')} onPress={() => router.push('/sell')} />
+      <View style={{ flex: 1, minWidth: 220, gap: 6 }}>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{t('vendorCtaTitle')}</Text>
+        <Text style={{ color: '#DCE6F2', fontSize: 13 }}>{t('vendorCtaBody')}</Text>
+      </View>
+      <Button variant="white" title={me ? t('addProduct') : t('vendorCtaButton')} onPress={() => router.push(me ? '/sell' : '/account')} />
+    </View>
+  );
+}
+
+/** Banner shown to a signed-in vendor the moment a customer inquiry arrives. */
+export function InquiryBanner() {
+  const { t } = useI18n();
+  const { alert, dismissAlert } = useStore();
+  useEffect(() => {
+    if (!alert) return;
+    const id = setTimeout(dismissAlert, 12000);
+    return () => clearTimeout(id);
+  }, [alert, dismissAlert]);
+  if (!alert) return null;
+  return (
+    <View pointerEvents="box-none" style={{ position: 'absolute', top: 12, start: 0, end: 0, alignItems: 'center', zIndex: 100 }}>
+      <Pressable
+        onPress={() => { dismissAlert(); router.push('/account'); }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.primary, borderRadius: 14, padding: 14, maxWidth: 520, marginHorizontal: 16,
+          shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 }}
+      >
+        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="bell" size={20} color="#fff" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#fff', fontWeight: '700' }}>{t('newInquiry')}</Text>
+          <Text style={{ color: '#DCE6F2', fontSize: 12 }} numberOfLines={2}>
+            {alert.customerName} {t('wantsToContact')} {alert.items.map((i) => i.name).join('، ')}
+          </Text>
+        </View>
+        <Pressable onPress={dismissAlert} hitSlop={10}><Icon name="close" size={18} color="#fff" /></Pressable>
+      </Pressable>
     </View>
   );
 }
@@ -435,37 +521,37 @@ export const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   screenInner: { width: '100%', maxWidth: MAX_W, alignSelf: 'center', padding: 16, gap: 14 },
   wrap: { width: '100%', maxWidth: MAX_W, alignSelf: 'center', paddingHorizontal: 16 },
-  h: { fontSize: 18, fontWeight: '700', color: C.text },
-  muted: { color: C.muted, fontSize: 13 },
+  h: { fontSize: 17, fontWeight: '700', color: C.text },
+  muted: { color: C.muted, fontSize: 13, lineHeight: 22 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
-  btn: { paddingVertical: 12, paddingHorizontal: 18, borderRadius: R.sm, alignItems: 'center', justifyContent: 'center' },
-  btnText: { fontWeight: '700', fontSize: 15 },
-  chip: { paddingVertical: 7, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: C.card },
-  chipText: { fontSize: 13, color: C.text, fontWeight: '600' },
-  langPill: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 4 },
+  btn: { paddingVertical: 11, paddingHorizontal: 18, borderRadius: R.sm, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  btnText: { fontWeight: '700', fontSize: 14 },
+  chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: C.card, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chipText: { fontSize: 12, color: C.text, fontWeight: '600' },
+  langPill: { paddingVertical: 2, paddingHorizontal: 8, borderRadius: 4 },
   label: { fontSize: 13, fontWeight: '600', color: C.text, marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, backgroundColor: C.card, color: C.text },
+  input: { borderWidth: 1, borderColor: C.border, borderRadius: R.sm, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, backgroundColor: C.card, color: C.text },
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F4F6F9', borderWidth: 1, borderColor: C.border, borderRadius: 10, paddingHorizontal: 12 },
-  navLink: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
-  badge: { position: 'absolute', top: 0, end: 0, backgroundColor: C.accent, borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+  navLink: { paddingVertical: 7, paddingHorizontal: 11, borderRadius: 8 },
+  badge: { position: 'absolute', top: 2, end: 0, backgroundColor: C.accent, borderRadius: 9, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700', lineHeight: 16 },
   sectionRow: { flexDirection: 'row', alignItems: 'flex-end', borderBottomWidth: 1, borderColor: C.border, marginTop: 8 },
-  sectionPill: { backgroundColor: C.primarySoft, paddingVertical: 8, paddingHorizontal: 18, borderTopLeftRadius: 8, borderTopRightRadius: 8 },
-  sectionText: { fontSize: 16, fontWeight: '800', color: C.primary },
+  sectionPill: { backgroundColor: C.primarySoft, paddingVertical: 7, paddingHorizontal: 16, borderTopLeftRadius: 8, borderTopRightRadius: 8 },
+  sectionText: { fontSize: 15, fontWeight: '700', color: C.primary },
   hero: { borderRadius: 16, padding: 24, flexDirection: 'row', alignItems: 'center', overflow: 'hidden', gap: 20 },
   heroBlob: { position: 'absolute', borderRadius: 999, backgroundColor: '#fff', opacity: 0.08 },
   card: { backgroundColor: C.card, borderRadius: R.md, overflow: 'hidden', borderWidth: 1, borderColor: C.border, flex: 1 },
-  cardTitle: { fontSize: 14, fontWeight: '600', color: C.text, minHeight: 36 },
-  code: { fontSize: 11, color: C.muted, letterSpacing: 0.3 },
-  cardFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: 10, borderTopWidth: 1, borderColor: '#F0F1F3', marginTop: 8 },
-  price: { fontSize: 15, fontWeight: '800', color: C.primary, flexShrink: 1 },
+  cardTitle: { fontSize: 13, fontWeight: '600', color: C.text, minHeight: 44, lineHeight: 22 },
+  code: { fontSize: 10, color: C.muted, letterSpacing: 0.3 },
+  cardFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: 10, borderTopWidth: 1, borderColor: '#F0F1F3', marginTop: 6 },
+  price: { fontSize: 14, fontWeight: '700', color: C.primary, flexShrink: 1 },
   cartBtn: { backgroundColor: C.primary, width: 36, height: 30, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   favBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
-  availBadge: { position: 'absolute', top: 8, start: 8, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 4 },
+  availBadge: { position: 'absolute', top: 8, start: 8, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 4 },
   groupTile: { borderRadius: R.md, overflow: 'hidden', backgroundColor: C.card, borderWidth: 1, borderColor: C.border },
   subTile: { alignItems: 'center', gap: 6, padding: 8, width: 104 },
-  cta: { backgroundColor: C.primary, borderRadius: 16, padding: 24, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16, overflow: 'hidden', marginTop: 8 },
-  footHead: { color: '#fff', fontWeight: '800', fontSize: 14, marginBottom: 4 },
-  footLink: { color: '#C9D6E8', fontSize: 14 },
+  cta: { backgroundColor: C.primary, borderRadius: 16, padding: 22, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16, overflow: 'hidden', marginTop: 8 },
+  footHead: { color: '#fff', fontWeight: '700', fontSize: 14, marginBottom: 4 },
+  footLink: { color: '#C9D6E8', fontSize: 13 },
   panel: { backgroundColor: C.card, borderRadius: R.md, padding: 14, borderWidth: 1, borderColor: C.border, gap: 8 },
 });

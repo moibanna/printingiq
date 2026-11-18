@@ -7,90 +7,90 @@ export type Availability = 'in_stock' | 'out_of_stock' | 'custom_order';
 export const AVAILABILITY: Availability[] = ['in_stock', 'custom_order', 'out_of_stock'];
 
 /** Two levels: a few main groups, each with subcategories. Products point at a subcategory id. */
-export type Group = { id: string; icon: string; tint: string; name: Localized };
-export type Category = { id: string; group: string; icon: string; name: Localized };
+export type Group = { id: string; tint: string; name: Localized };
+export type Category = { id: string; group: string; name: Localized };
 
 export const GROUPS: Group[] = [
-  { id: 'sign', icon: '🪧', tint: '#E3EDFB', name: { en: 'Sign & print materials', ar: 'مواد الدعاية والطباعة', ckb: 'کەرەستەی ڕیکلام و چاپ' } },
-  { id: 'machines', icon: '🖨️', tint: '#DDF3EC', name: { en: 'Machines & equipment', ar: 'المكائن والمعدات', ckb: 'ئامێر و کەرەستە' } },
-  { id: 'ink', icon: '🎨', tint: '#ECE6FF', name: { en: 'Inks & consumables', ar: 'الأحبار والمستلزمات', ckb: 'مەرەکەب و پێداویستی' } },
-  { id: 'services', icon: '🧾', tint: '#FFF1E0', name: { en: 'Printing services', ar: 'خدمات الطباعة', ckb: 'خزمەتگوزاری چاپ' } },
-  { id: 'stationery', icon: '✏️', tint: '#FFF7CC', name: { en: 'Stationery & office', ar: 'القرطاسية والمكتب', ckb: 'قرتاسیە و ئۆفیس' } },
-  { id: 'promo', icon: '🎁', tint: '#FDE7EF', name: { en: 'Promotional & gifts', ar: 'الهدايا والدعاية', ckb: 'دیاری و پرۆمۆشن' } },
-  { id: 'awards', icon: '🏆', tint: '#FFF0D1', name: { en: 'Awards & medals', ar: 'الدروع والميداليات', ckb: 'خەڵات و مەدالیا' } },
-  { id: 'apparel', icon: '👕', tint: '#E4F2FF', name: { en: 'Clothing & bags', ar: 'الملابس والحقائب', ckb: 'جل و جانتا' } },
+  { id: 'sign', tint: '#E3EDFB', name: { en: 'Sign & print materials', ar: 'مواد الدعاية والطباعة', ckb: 'کەرەستەی ڕیکلام و چاپ' } },
+  { id: 'machines', tint: '#DDF3EC', name: { en: 'Machines & equipment', ar: 'المكائن والمعدات', ckb: 'ئامێر و کەرەستە' } },
+  { id: 'ink', tint: '#ECE6FF', name: { en: 'Inks & consumables', ar: 'الأحبار والمستلزمات', ckb: 'مەرەکەب و پێداویستی' } },
+  { id: 'services', tint: '#FFF1E0', name: { en: 'Printing services', ar: 'خدمات الطباعة', ckb: 'خزمەتگوزاری چاپ' } },
+  { id: 'stationery', tint: '#FFF7CC', name: { en: 'Stationery & office', ar: 'القرطاسية والمكتب', ckb: 'قرتاسیە و ئۆفیس' } },
+  { id: 'promo', tint: '#FDE7EF', name: { en: 'Promotional & gifts', ar: 'الهدايا والدعاية', ckb: 'دیاری و پرۆمۆشن' } },
+  { id: 'awards', tint: '#FFF0D1', name: { en: 'Awards & medals', ar: 'الدروع والميداليات', ckb: 'خەڵات و مەدالیا' } },
+  { id: 'apparel', tint: '#E4F2FF', name: { en: 'Clothing & bags', ar: 'الملابس والحقائب', ckb: 'جل و جانتا' } },
 ];
 
-const c = (group: string, id: string, icon: string, en: string, ar: string, ckb: string): Category => ({ id, group, icon, name: { en, ar, ckb } });
+const c = (group: string, id: string, en: string, ar: string, ckb: string): Category => ({ id, group, name: { en, ar, ckb } });
 
 export const CATEGORIES: Category[] = [
   // Sign & print materials
-  c('sign', 'acrylic', '🟦', 'Acrylic sheets', 'ألواح أكريليك', 'ئەکریلیک'),
-  c('sign', 'foam', '⬜', 'Foam & PVC board', 'فوم بورد و PVC', 'فۆم و PVC'),
-  c('sign', 'acp', '🪟', 'Alucobond (ACP)', 'ألكوبوند', 'ئەلەکوبۆند'),
-  c('sign', 'flex', '🧻', 'Flex banner', 'فليكس', 'فلێکس'),
-  c('sign', 'vinyl', '🏷️', 'Stickers & vinyl', 'ستيكر وفينيل', 'ستیکەر و ڤینایل'),
-  c('sign', 'paper', '📄', 'Paper & cardboard', 'ورق وكارتون', 'کاغەز و کارتۆن'),
-  c('sign', 'led', '💡', 'LED, light boxes & power supplies', 'ليد وصناديق ضوئية ومحولات', 'LED، لایت بۆکس و پاوەر'),
-  c('sign', 'stands', '🪜', 'Roll-ups & display stands', 'رول أب وستاندات عرض', 'ڕۆڵ ئەپ و ستاند'),
-  c('sign', 'menu-stand', '🗒️', 'Table & menu stands', 'ستاند طاولة ومنيو', 'ستاندی مێز و مێنیو'),
-  c('sign', 'door-sign', '🚪', 'Door signs & name plates', 'لوحات أبواب', 'ناونیشانی سەردەرگا'),
+  c('sign', 'acrylic', 'Acrylic sheets', 'ألواح أكريليك', 'ئەکریلیک'),
+  c('sign', 'foam', 'Foam & PVC board', 'فوم بورد و PVC', 'فۆم و PVC'),
+  c('sign', 'acp', 'Alucobond (ACP)', 'ألكوبوند', 'ئەلەکوبۆند'),
+  c('sign', 'flex', 'Flex banner', 'فليكس', 'فلێکس'),
+  c('sign', 'vinyl', 'Stickers & vinyl', 'ستيكر وفينيل', 'ستیکەر و ڤینایل'),
+  c('sign', 'paper', 'Paper & cardboard', 'ورق وكارتون', 'کاغەز و کارتۆن'),
+  c('sign', 'led', 'LED, light boxes & power supplies', 'ليد وصناديق ضوئية ومحولات', 'LED، لایت بۆکس و پاوەر'),
+  c('sign', 'stands', 'Roll-ups & display stands', 'رول أب وستاندات عرض', 'ڕۆڵ ئەپ و ستاند'),
+  c('sign', 'menu-stand', 'Table & menu stands', 'ستاند طاولة ومنيو', 'ستاندی مێز و مێنیو'),
+  c('sign', 'door-sign', 'Door signs & name plates', 'لوحات أبواب', 'ناونیشانی سەردەرگا'),
   // Machines
-  c('machines', 'large-format', '🖨️', 'Large-format printers', 'طابعات الفليكس والإعلان', 'چاپکەری فۆرماتی گەورە'),
-  c('machines', 'uv-printer', '🔆', 'UV printers', 'طابعات UV', 'چاپکەری UV'),
-  c('machines', 'laser-cnc', '⚡', 'Laser & CNC machines', 'مكائن ليزر و CNC', 'ئامێری لەیزەر و CNC'),
-  c('machines', 'plotter', '✂️', 'Cutting plotters', 'بلوتر قص', 'پلۆتەری بڕین'),
-  c('machines', 'heat-press', '♨️', 'Sublimation & heat press', 'مكائن سبلميشن وكبس حراري', 'سەبلیمەیشن و پرێسی گەرم'),
-  c('machines', 'office-print', '📠', 'Digital presses & copiers', 'طابعات رقمية واستنساخ', 'چاپکەری دیجیتاڵ و کۆپی'),
-  c('machines', 'screens', '🖥️', 'Digital signage screens', 'شاشات إعلانية', 'شاشەی ڕیکلام'),
-  c('machines', 'tools', '🔧', 'Tools & spare parts', 'أدوات وقطع غيار', 'ئامراز و پارچەی یەدەگ'),
+  c('machines', 'large-format', 'Large-format printers', 'طابعات الفليكس والإعلان', 'چاپکەری فۆرماتی گەورە'),
+  c('machines', 'uv-printer', 'UV printers', 'طابعات UV', 'چاپکەری UV'),
+  c('machines', 'laser-cnc', 'Laser & CNC machines', 'مكائن ليزر و CNC', 'ئامێری لەیزەر و CNC'),
+  c('machines', 'plotter', 'Cutting plotters', 'بلوتر قص', 'پلۆتەری بڕین'),
+  c('machines', 'heat-press', 'Sublimation & heat press', 'مكائن سبلميشن وكبس حراري', 'سەبلیمەیشن و پرێسی گەرم'),
+  c('machines', 'office-print', 'Digital presses & copiers', 'طابعات رقمية واستنساخ', 'چاپکەری دیجیتاڵ و کۆپی'),
+  c('machines', 'screens', 'Digital signage screens', 'شاشات إعلانية', 'شاشەی ڕیکلام'),
+  c('machines', 'tools', 'Tools & spare parts', 'أدوات وقطع غيار', 'ئامراز و پارچەی یەدەگ'),
   // Inks & consumables
-  c('ink', 'solvent-ink', '🛢️', 'Solvent & eco-solvent ink', 'حبر سولفنت وإيكو سولفنت', 'مەرەکەبی سۆڵڤێنت'),
-  c('ink', 'uv-ink', '🟣', 'UV ink', 'حبر UV', 'مەرەکەبی UV'),
-  c('ink', 'sublimation-ink', '🌈', 'Sublimation ink & paper', 'حبر وورق سبلميشن', 'مەرەکەب و کاغەزی سەبلیمەیشن'),
-  c('ink', 'toner', '⚫', 'Toner & cartridges', 'تونر وخراطيش', 'تۆنەر و کارتریج'),
-  c('ink', 'lamination', '🎞️', 'Lamination film', 'رول سلفنة', 'فیلمی لامینەیشن'),
+  c('ink', 'solvent-ink', 'Solvent & eco-solvent ink', 'حبر سولفنت وإيكو سولفنت', 'مەرەکەبی سۆڵڤێنت'),
+  c('ink', 'uv-ink', 'UV ink', 'حبر UV', 'مەرەکەبی UV'),
+  c('ink', 'sublimation-ink', 'Sublimation ink & paper', 'حبر وورق سبلميشن', 'مەرەکەب و کاغەزی سەبلیمەیشن'),
+  c('ink', 'toner', 'Toner & cartridges', 'تونر وخراطيش', 'تۆنەر و کارتریج'),
+  c('ink', 'lamination', 'Lamination film', 'رول سلفنة', 'فیلمی لامینەیشن'),
   // Printing services
-  c('services', 'business-cards', '📇', 'Business cards', 'كروت شخصية', 'کارتی بازرگانی'),
-  c('services', 'flyers', '📰', 'Flyers & brochures', 'فلايرات وبروشورات', 'فلایەر و بڕۆشوور'),
-  c('services', 'banner-print', '🖼️', 'Banner & poster printing', 'طباعة بنرات وبوسترات', 'چاپی بانەر و پۆستەر'),
-  c('services', 'packaging', '📦', 'Boxes & packaging', 'علب وتغليف', 'بۆکس و پاکێجینگ'),
-  c('services', 'sticker-print', '🔖', 'Label & sticker printing', 'طباعة ليبل وستيكر', 'چاپی لەیبڵ و ستیکەر'),
+  c('services', 'business-cards', 'Business cards', 'كروت شخصية', 'کارتی بازرگانی'),
+  c('services', 'flyers', 'Flyers & brochures', 'فلايرات وبروشورات', 'فلایەر و بڕۆشوور'),
+  c('services', 'banner-print', 'Banner & poster printing', 'طباعة بنرات وبوسترات', 'چاپی بانەر و پۆستەر'),
+  c('services', 'packaging', 'Boxes & packaging', 'علب وتغليف', 'بۆکس و پاکێجینگ'),
+  c('services', 'sticker-print', 'Label & sticker printing', 'طباعة ليبل وستيكر', 'چاپی لەیبڵ و ستیکەر'),
   // Stationery & office
-  c('stationery', 'pens', '🖊️', 'Pens', 'أقلام', 'قەڵەم'),
-  c('stationery', 'notebooks', '📓', 'Notebooks & agendas', 'دفاتر وأجندات', 'دەفتەر و ئەجێندا'),
-  c('stationery', 'folders', '🗂️', 'Folders & files', 'فولدرات وملفات', 'فۆڵدەر و فایل'),
-  c('stationery', 'office-paper', '📃', 'A4 & copy paper', 'ورق A4 واستنساخ', 'کاغەزی A4 و کۆپی'),
-  c('stationery', 'calculators', '🧮', 'Calculators', 'آلات حاسبة', 'حاسیبە'),
-  c('stationery', 'pen-box', '✒️', 'Pen boxes & desk sets', 'علب أقلام وأطقم مكتب', 'بۆکسی قەڵەم و سێتی مێز'),
-  c('stationery', 'card-holder', '💳', 'Business card & ID holders', 'حافظات كروت وباجات', 'هەڵگری کارت و ئایدی'),
-  c('stationery', 'certificate-holder', '📜', 'Certificate holders', 'حافظات شهادات', 'هەڵگری بڕوانامە'),
-  c('stationery', 'office-supplies', '📎', 'Office supplies', 'مستلزمات مكتبية', 'پێداویستی ئۆفیس'),
+  c('stationery', 'pens', 'Pens', 'أقلام', 'قەڵەم'),
+  c('stationery', 'notebooks', 'Notebooks & agendas', 'دفاتر وأجندات', 'دەفتەر و ئەجێندا'),
+  c('stationery', 'folders', 'Folders & files', 'فولدرات وملفات', 'فۆڵدەر و فایل'),
+  c('stationery', 'office-paper', 'A4 & copy paper', 'ورق A4 واستنساخ', 'کاغەزی A4 و کۆپی'),
+  c('stationery', 'calculators', 'Calculators', 'آلات حاسبة', 'حاسیبە'),
+  c('stationery', 'pen-box', 'Pen boxes & desk sets', 'علب أقلام وأطقم مكتب', 'بۆکسی قەڵەم و سێتی مێز'),
+  c('stationery', 'card-holder', 'Business card & ID holders', 'حافظات كروت وباجات', 'هەڵگری کارت و ئایدی'),
+  c('stationery', 'certificate-holder', 'Certificate holders', 'حافظات شهادات', 'هەڵگری بڕوانامە'),
+  c('stationery', 'office-supplies', 'Office supplies', 'مستلزمات مكتبية', 'پێداویستی ئۆفیس'),
   // Promotional & gifts
-  c('promo', 'mugs', '☕', 'Mugs & cups', 'أكواب', 'کوپ'),
-  c('promo', 'thermos', '🧴', 'Thermos & bottles', 'ترامس وقناني', 'مەتارە'),
-  c('promo', 'keychains', '🔑', 'Keychains', 'ميداليات مفاتيح', 'کلیلەدان'),
-  c('promo', 'flash', '💾', 'Flash memory', 'فلاش ميموري', 'فلاش میمۆری'),
-  c('promo', 'powerbank', '🔋', 'Power banks & mobile', 'باور بانك وإكسسوارات موبايل', 'پاوەربانک و مۆبایل'),
-  c('promo', 'clocks', '🕰️', 'Clocks & calendars', 'ساعات وتقاويم', 'کاتژمێر و ڕۆژژمێر'),
-  c('promo', 'gift-box', '🎁', 'Gift boxes & VIP sets', 'علب وأطقم هدايا VIP', 'بۆکس و سێتی دیاری VIP'),
-  c('promo', 'gift-bags', '🛍️', 'Gift & paper bags', 'أكياس هدايا وورقية', 'کیسی دیاری و کاغەز'),
-  c('promo', 'frames', '🖼️', 'Photo frames', 'إطارات صور', 'چوارچێوەی وێنە'),
-  c('promo', 'tissue-box', '🧻', 'Tissue boxes', 'علب مناديل', 'بۆکسی کلینس'),
-  c('promo', 'sunshade', '🚗', 'Car sunshades', 'مظلات سيارة', 'سێبەری ئۆتۆمبێل'),
-  c('promo', 'holographic', '✨', 'Holographic & special items', 'هولوغرام ومنتجات خاصة', 'هۆڵۆگرافیک و بابەتی تایبەت'),
+  c('promo', 'mugs', 'Mugs & cups', 'أكواب', 'کوپ'),
+  c('promo', 'thermos', 'Thermos & bottles', 'ترامس وقناني', 'مەتارە'),
+  c('promo', 'keychains', 'Keychains', 'ميداليات مفاتيح', 'کلیلەدان'),
+  c('promo', 'flash', 'Flash memory', 'فلاش ميموري', 'فلاش میمۆری'),
+  c('promo', 'powerbank', 'Power banks & mobile', 'باور بانك وإكسسوارات موبايل', 'پاوەربانک و مۆبایل'),
+  c('promo', 'clocks', 'Clocks & calendars', 'ساعات وتقاويم', 'کاتژمێر و ڕۆژژمێر'),
+  c('promo', 'gift-box', 'Gift boxes & VIP sets', 'علب وأطقم هدايا VIP', 'بۆکس و سێتی دیاری VIP'),
+  c('promo', 'gift-bags', 'Gift & paper bags', 'أكياس هدايا وورقية', 'کیسی دیاری و کاغەز'),
+  c('promo', 'frames', 'Photo frames', 'إطارات صور', 'چوارچێوەی وێنە'),
+  c('promo', 'tissue-box', 'Tissue boxes', 'علب مناديل', 'بۆکسی کلینس'),
+  c('promo', 'sunshade', 'Car sunshades', 'مظلات سيارة', 'سێبەری ئۆتۆمبێل'),
+  c('promo', 'holographic', 'Holographic & special items', 'هولوغرام ومنتجات خاصة', 'هۆڵۆگرافیک و بابەتی تایبەت'),
   // Awards
-  c('awards', 'crystal', '💎', 'Crystal awards', 'دروع كريستال', 'خەڵاتی کریستاڵ'),
-  c('awards', 'wood-award', '🪵', 'Wooden plaques', 'دروع خشبية', 'خەڵاتی دار'),
-  c('awards', 'trophies', '🏆', 'Trophies', 'كؤوس', 'جام'),
-  c('awards', 'medals', '🥇', 'Medals', 'ميداليات', 'مەدالیا'),
-  c('awards', 'seals', '🔰', 'Certificate seals & stickers', 'أختام وستيكرات شهادات', 'لەزگەی بڕوانامە'),
+  c('awards', 'crystal', 'Crystal awards', 'دروع كريستال', 'خەڵاتی کریستاڵ'),
+  c('awards', 'wood-award', 'Wooden plaques', 'دروع خشبية', 'خەڵاتی دار'),
+  c('awards', 'trophies', 'Trophies', 'كؤوس', 'جام'),
+  c('awards', 'medals', 'Medals', 'ميداليات', 'مەدالیا'),
+  c('awards', 'seals', 'Certificate seals & stickers', 'أختام وستيكرات شهادات', 'لەزگەی بڕوانامە'),
   // Clothing & bags
-  c('apparel', 't-shirts', '👕', 'T-shirts & polos', 'تيشيرتات', 'تیشێرت'),
-  c('apparel', 'hats', '🧢', 'Hats & caps', 'قبعات', 'کڵاو'),
-  c('apparel', 'vests', '🦺', 'Vests & uniforms', 'سترات ويونيفورم', 'هێلەگ و یونیفۆرم'),
-  c('apparel', 'bags', '👜', 'Bags & tote bags', 'حقائب وحقائب قماش', 'جانتا و توتباگ'),
-  c('apparel', 'laptop-bags', '💼', 'Laptop bags', 'حقائب لابتوب', 'جانتای لاپتۆپ'),
+  c('apparel', 't-shirts', 'T-shirts & polos', 'تيشيرتات', 'تیشێرت'),
+  c('apparel', 'hats', 'Hats & caps', 'قبعات', 'کڵاو'),
+  c('apparel', 'vests', 'Vests & uniforms', 'سترات ويونيفورم', 'هێلەگ و یونیفۆرم'),
+  c('apparel', 'bags', 'Bags & tote bags', 'حقائب وحقائب قماش', 'جانتا و توتباگ'),
+  c('apparel', 'laptop-bags', 'Laptop bags', 'حقائب لابتوب', 'جانتای لاپتۆپ'),
 ];
 
 export const groupById = (id: string) => GROUPS.find((g) => g.id === id);
@@ -133,7 +133,32 @@ export const CITIES: Localized[] = [
   { en: 'Ramadi', ar: 'الرمادي', ckb: 'ڕومادی' },
 ];
 
-export type Vendor = { id: string; name: string; city: string; phone: string; verified?: boolean };
+export type Vendor = {
+  id: string;
+  name: string;
+  city: string;
+  /** Phone for calls (07xx…) */
+  phone: string;
+  /** WhatsApp number if different from phone */
+  whatsapp?: string;
+  email?: string;
+  about?: string;
+  verified?: boolean;
+};
+
+/** A customer reaching out to a vendor through PrintingIQ. Vendors see these in their dashboard. */
+export type LeadChannel = 'whatsapp' | 'call' | 'quote';
+export type Lead = {
+  id: string;
+  vendorId: string;
+  channel: LeadChannel;
+  customerName: string;
+  customerPhone: string;
+  message?: string;
+  items: { productId: string; name: string; sku?: string; qty?: number }[];
+  createdAt: string;
+  read: boolean;
+};
 
 export type Product = {
   id: string;
@@ -163,7 +188,7 @@ const empty: Localized = { en: '', ar: '', ckb: '' };
 const pick = (...names: string[]) => COLOR_PALETTE.filter((c) => names.includes(c.name.en));
 
 export const SEED_VENDORS: Vendor[] = [
-  { id: 'v1', name: 'Hawler Sign Supply', city: 'Erbil', phone: '07501234567', verified: true },
+  { id: 'v1', name: 'Hawler Sign Supply', city: 'Erbil', phone: '07501234567', whatsapp: '07501234567', about: 'Acrylic, ACP, LED and vinyl wholesaler since 2012.', verified: true },
   { id: 'v2', name: 'Al-Rafidain Print Materials', city: 'Baghdad', phone: '07701234567', verified: true },
   { id: 'v3', name: 'Slemani Stationery House', city: 'Sulaymaniyah', phone: '07711234567' },
 ];

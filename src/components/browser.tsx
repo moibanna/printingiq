@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from './text';
 import { Category, ColorOption, Product } from '../lib/catalog';
 import { useI18n } from '../lib/i18n';
 import { inCategory, Sort, SORT_LABEL, SORTS, sortProducts } from '../lib/query';
@@ -27,7 +28,7 @@ export function ProductBrowser({ products, subcategories }: { products: Product[
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           <Chip label={t('all')} active={!sub} onPress={() => setSub(null)} />
           {subcategories.map((c) => (
-            <Chip key={c.id} label={`${c.icon} ${tl(c.name)}`} active={sub === c.id} onPress={() => { setSub(c.id); setColor(null); }} />
+            <Chip key={c.id} icon={c.id} label={tl(c.name)} active={sub === c.id} onPress={() => { setSub(c.id); setColor(null); }} />
           ))}
         </ScrollView>
       )}

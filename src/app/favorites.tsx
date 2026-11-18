@@ -8,7 +8,7 @@ export default function FavoritesScreen() {
   const list = favorites.map((id) => products.find((p) => p.id === id)).filter((p) => !!p);
   return (
     <Screen>
-      <SectionTitle title={`♡ ${t('favorites')}`} />
+      <SectionTitle icon="heart" title={t('favorites')} />
       {list.length ? <ProductGrid products={list} /> : <Muted>{t('emptyFavorites')}</Muted>}
     </Screen>
   );

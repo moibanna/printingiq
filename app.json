@@ -33,7 +33,8 @@
         {
           "photosPermission": "Allow PrintingIQ to use your photos so you can add product images."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "scheme": "printingiq"
   }

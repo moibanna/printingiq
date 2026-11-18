@@ -12,7 +12,7 @@ export default function Categories() {
     <Screen>
       {GROUPS.map((g) => (
         <View key={g.id} style={{ gap: 8 }}>
-          <SectionTitle title={`${g.icon} ${tl(g.name)}`} href={`/category/${g.id}`} />
+          <SectionTitle icon={g.id} title={tl(g.name)} href={`/category/${g.id}`} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
             {categoriesOf(g.id).map((c) => <SubTile key={c.id} category={c} count={inCategory(products, c.id).length} />)}
           </View>

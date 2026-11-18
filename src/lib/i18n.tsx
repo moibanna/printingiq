@@ -94,6 +94,46 @@ const strings = {
   },
   results: { en: 'results', ar: 'نتيجة', ckb: 'ئەنجام' },
   products: { en: 'Products', ar: 'المنتجات', ckb: 'بەرهەمەکان' },
+  // Vendor accounts
+  vendorAccount: { en: 'Vendor account', ar: 'حساب البائع', ckb: 'هەژماری فرۆشیار' },
+  customersNoAccount: { en: 'Customers don’t need an account: just browse and contact vendors.', ar: 'الزبائن لا يحتاجون حساباً: تصفح وتواصل مع البائعين مباشرة.', ckb: 'کڕیاران پێویستیان بە هەژمار نییە: تەنها سەیر بکە و پەیوەندی بە فرۆشیارەوە بکە.' },
+  createVendor: { en: 'Create a vendor account', ar: 'إنشاء حساب بائع', ckb: 'دروستکردنی هەژماری فرۆشیار' },
+  haveAccount: { en: 'Already a vendor? Sign in', ar: 'لديك حساب؟ سجّل الدخول', ckb: 'هەژمارت هەیە؟ بچۆ ژوورەوە' },
+  noAccount: { en: 'New vendor? Create an account', ar: 'بائع جديد؟ أنشئ حساباً', ckb: 'فرۆشیاری نوێیت؟ هەژمار دروست بکە' },
+  whatsappNumber: { en: 'WhatsApp number (if different)', ar: 'رقم الواتساب (إن كان مختلفاً)', ckb: 'ژمارەی واتسئەپ (ئەگەر جیاوازە)' },
+  aboutShop: { en: 'About your shop (optional)', ar: 'نبذة عن متجرك (اختياري)', ckb: 'دەربارەی دوکانەکەت (ئارەزوومەندانە)' },
+  passwordHint: { en: 'At least 6 characters', ar: '6 أحرف على الأقل', ckb: 'بەلایەنی کەم 6 پیت' },
+  fillRequired: { en: 'Please fill shop name, phone, email and password.', ar: 'يرجى إدخال اسم المتجر والهاتف والبريد وكلمة المرور.', ckb: 'تکایە ناوی دوکان، تەلەفۆن، ئیمەیڵ و وشەی نهێنی بنووسە.' },
+  checkEmail: { en: 'Account created. If asked, confirm your email, then sign in.', ar: 'تم إنشاء الحساب. إن طُلب منك، أكّد بريدك ثم سجّل الدخول.', ckb: 'هەژمار دروست کرا. ئەگەر داوا کرا، ئیمەیڵەکەت پشتڕاست بکەرەوە و بچۆ ژوورەوە.' },
+  dashboard: { en: 'Vendor dashboard', ar: 'لوحة البائع', ckb: 'داشبۆردی فرۆشیار' },
+  inquiries: { en: 'Inquiries', ar: 'الاستفسارات', ckb: 'داواکارییەکان' },
+  myShop: { en: 'My shop', ar: 'متجري', ckb: 'دوکانەکەم' },
+  viewShop: { en: 'View shop', ar: 'عرض المتجر', ckb: 'بینینی دوکان' },
+  edit: { en: 'Edit', ar: 'تعديل', ckb: 'دەستکاری' },
+  saveChanges: { en: 'Save changes', ar: 'حفظ التغييرات', ckb: 'پاشەکەوتکردنی گۆڕانکاری' },
+  editProduct: { en: 'Edit product', ar: 'تعديل المنتج', ckb: 'دەستکاری بەرهەم' },
+  noInquiries: { en: 'No inquiries yet. When a customer contacts you through PrintingIQ, it appears here and you get a notification.', ar: 'لا توجد استفسارات بعد. عندما يتواصل معك زبون عبر PrintingIQ ستظهر هنا وتصلك إشعار.', ckb: 'هێشتا هیچ داواکارییەک نییە. کاتێک کڕیارێک لە ڕێگەی PrintingIQ پەیوەندیت پێوە دەکات، لێرە دەردەکەوێت و ئاگادارکردنەوەت پێدەگات.' },
+  newInquiry: { en: 'New customer inquiry', ar: 'استفسار جديد من زبون', ckb: 'داواکاری نوێی کڕیار' },
+  wantsToContact: { en: 'wants to contact you about', ar: 'يريد التواصل معك بخصوص', ckb: 'دەیەوێت پەیوەندیت پێوە بکات دەربارەی' },
+  viaWhatsapp: { en: 'via WhatsApp', ar: 'عبر واتساب', ckb: 'لە ڕێگەی واتسئەپ' },
+  viaCall: { en: 'by phone call', ar: 'عبر اتصال', ckb: 'بە پەیوەندی تەلەفۆنی' },
+  viaQuote: { en: 'quote request', ar: 'طلب عرض سعر', ckb: 'داوای نرخ' },
+  markRead: { en: 'Mark as read', ar: 'تحديد كمقروء', ckb: 'وەک خوێندراو' },
+  replyWhatsapp: { en: 'Reply on WhatsApp', ar: 'الرد على واتساب', ckb: 'وەڵام بە واتسئەپ' },
+  enableAlerts: { en: 'Turn on notifications', ar: 'تفعيل الإشعارات', ckb: 'چالاککردنی ئاگادارکردنەوە' },
+  signInToSell: { en: 'Sign in or create a vendor account to list products.', ar: 'سجّل الدخول أو أنشئ حساب بائع لعرض المنتجات.', ckb: 'بچۆ ژوورەوە یان هەژماری فرۆشیار دروست بکە بۆ دانانی بەرهەم.' },
+  // Contact flow
+  contactVendor: { en: 'Contact vendor', ar: 'تواصل مع البائع', ckb: 'پەیوەندی بە فرۆشیار' },
+  yourName: { en: 'Your name', ar: 'اسمك', ckb: 'ناوت' },
+  yourPhone: { en: 'Your phone (07xx…)', ar: 'رقم هاتفك (07xx…)', ckb: 'ژمارەی تەلەفۆنت (07xx…)' },
+  yourMessage: { en: 'Message (optional)', ar: 'رسالة (اختياري)', ckb: 'نامە (ئارەزوومەندانە)' },
+  contactNote: { en: 'The vendor is notified on PrintingIQ that you want to contact them.', ar: 'سيتم إشعار البائع على PrintingIQ بأنك تريد التواصل معه.', ckb: 'فرۆشیار لە PrintingIQ ئاگادار دەکرێتەوە کە دەتەوێت پەیوەندی پێوە بکەیت.' },
+  needNamePhone: { en: 'Please enter your name and phone.', ar: 'يرجى إدخال اسمك ورقم هاتفك.', ckb: 'تکایە ناو و ژمارەی تەلەفۆنت بنووسە.' },
+  waGreeting: { en: 'Hello {vendor}, I found your product on PrintingIQ:', ar: 'مرحباً {vendor}، وجدت منتجك على PrintingIQ:', ckb: 'سڵاو {vendor}، بەرهەمەکەتم لە PrintingIQ بینی:' },
+  waMyName: { en: 'My name', ar: 'اسمي', ckb: 'ناوم' },
+  replyGreeting: { en: 'Hello {name}, this is {shop}. Thank you for your inquiry on PrintingIQ.', ar: 'مرحباً {name}، معك {shop}. شكراً لاستفسارك عبر PrintingIQ.', ckb: 'سڵاو {name}، من {shop}م. سوپاس بۆ داواکارییەکەت لە PrintingIQ.' },
+  soldBy: { en: 'Sold by', ar: 'يبيعه', ckb: 'فرۆشیار' },
+  productsCount: { en: 'products', ar: 'منتج', ckb: 'بەرهەم' },
   allProducts: { en: 'All products', ar: 'كل المنتجات', ckb: 'هەموو بەرهەمەکان' },
   all: { en: 'All', ar: 'الكل', ckb: 'هەموو' },
   favorites: { en: 'Favorites', ar: 'المفضلة', ckb: 'دڵخوازەکان' },
@@ -169,17 +209,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       document.documentElement.lang = lang === 'ckb' ? 'ckb' : lang;
       document.documentElement.dir = isRTL(lang) ? 'rtl' : 'ltr';
       document.title = 'PrintingIQ';
-      // Noto Sans Arabic covers Kurdish Sorani letters (ڕ ڵ ۆ ێ ڤ) as well as Arabic.
-      if (!document.getElementById('piq-font')) {
-        const link = document.createElement('link');
-        link.id = 'piq-font';
-        link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700;800&display=swap';
-        document.head.appendChild(link);
-        const style = document.createElement('style');
-        style.textContent = 'body,input,textarea,button,div{font-family:"Noto Sans Arabic",system-ui,sans-serif}';
-        document.head.appendChild(style);
-      }
     }
   }, [lang]);
 

@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Text } from 'react-native';
+import { Text } from '../../components/text';
 import { ProductBrowser } from '../../components/browser';
 import { Screen, SectionTitle } from '../../components/ui';
 import { categoriesOf, categoryById, groupById } from '../../lib/catalog';
@@ -15,13 +15,13 @@ export default function CategoryScreen() {
   const group = groupById(id);
   const cat = categoryById(id);
   const parent = cat ? groupById(cat.group) : undefined;
-  const title = group ? `${group.icon} ${tl(group.name)}` : cat ? `${cat.icon} ${tl(cat.name)}` : '';
+  const title = group ? tl(group.name) : cat ? tl(cat.name) : '';
 
   return (
     <Screen>
       <Stack.Screen options={{ title }} />
       {parent && <Text style={{ color: C.muted }}>{tl(parent.name)} {arrow}</Text>}
-      <SectionTitle title={title} />
+      <SectionTitle icon={id} title={title} />
       <ProductBrowser products={inCategory(products, id)} subcategories={group ? categoriesOf(group.id) : undefined} />
     </Screen>
   );

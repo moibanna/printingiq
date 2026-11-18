@@ -1,7 +1,9 @@
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
-import { useWide, WebHeader } from '../components/ui';
+import { FONT_FILES } from '../components/text';
+import { InquiryBanner, useWide, WebHeader } from '../components/ui';
 import { I18nProvider, useI18n } from '../lib/i18n';
 import { StoreProvider } from '../lib/store';
 import { C } from '../lib/theme';
@@ -15,7 +17,7 @@ function Root() {
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          headerTitleStyle: { fontWeight: '700' },
+          headerTitleStyle: { fontFamily: 'NotoKufiArabic_700Bold', fontSize: 16 },
           headerTintColor: C.primary,
           contentStyle: { backgroundColor: C.bg },
           headerBackButtonDisplayMode: 'minimal',
@@ -25,14 +27,18 @@ function Root() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'PrintingIQ' }} />
         <Stack.Screen name="category/[id]" options={{ title: t('categories') }} />
         <Stack.Screen name="product/[id]" options={{ title: '' }} />
+        <Stack.Screen name="vendor/[id]" options={{ title: t('myShop') }} />
         <Stack.Screen name="search" options={{ title: t('allProducts') }} />
         <Stack.Screen name="favorites" options={{ title: t('favorites') }} />
       </Stack>
+      <InquiryBanner />
     </View>
   );
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(FONT_FILES);
+  if (!fontsLoaded && !fontError) return null; // a split second while Noto Kufi Arabic loads
   return (
     <I18nProvider>
       <StoreProvider>

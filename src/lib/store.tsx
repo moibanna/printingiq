@@ -1,23 +1,40 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { backend } from './backend';
-import { Product, Vendor } from './catalog';
+import Constants from 'expo-constants';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform } from 'react-native';
+import { backend, LeadInput, VendorInput } from './backend';
+import { Lead, Product, Vendor } from './catalog';
+
+export type QuoteItem = { productId: string; qty: number };
+export type Customer = { name: string; phone: string };
 
 type Store = {
   mode: 'local' | 'supabase';
   loading: boolean;
   products: Product[];
   vendors: Record<string, Vendor>;
+  refresh: () => Promise<void>;
+  // Vendor session
   me: Vendor | null;
   email: string | null;
-  refresh: () => Promise<void>;
-  addProduct: (p: Product) => Promise<Product>;
-  deleteProduct: (id: string) => Promise<void>;
-  saveProfile: (v: Omit<Vendor, 'id'>) => Promise<void>;
+  signUpVendor: (email: string, pw: string, v: VendorInput) => Promise<{ needsConfirmation: boolean }>;
   signIn: (email: string, pw: string) => Promise<void>;
-  signUp: (email: string, pw: string) => Promise<void>;
   signOut: () => Promise<void>;
-  /** Favorites and the quote list are per device (like a shopping cart). */
+  saveProfile: (v: VendorInput) => Promise<void>;
+  addProduct: (p: Product) => Promise<Product>;
+  updateProduct: (p: Product) => Promise<Product>;
+  deleteProduct: (id: string) => Promise<void>;
+  // Inquiries for the signed-in vendor
+  leads: Lead[];
+  unread: number;
+  markRead: (id: string) => Promise<void>;
+  /** Latest inquiry that arrived while the app was open (shown as a banner). */
+  alert: Lead | null;
+  dismissAlert: () => void;
+  // Customer side
+  customer: Customer | null;
+  /** Records the inquiry (vendor gets notified) and remembers the customer's name/phone. */
+  sendLead: (l: LeadInput) => Promise<void>;
   favorites: string[];
   toggleFavorite: (productId: string) => void;
   quote: QuoteItem[];
@@ -26,9 +43,7 @@ type Store = {
   clearQuote: (productIds?: string[]) => void;
 };
 
-export type QuoteItem = { productId: string; qty: number };
-const FAV_KEY = 'printingiq.favorites';
-const QUOTE_KEY = 'printingiq.quote';
+const Ctx = createContext<Store | null>(null);
 
 function usePersisted<T>(key: string, initial: T) {
   const [v, setV] = useState<T>(initial);
@@ -45,7 +60,30 @@ function usePersisted<T>(key: string, initial: T) {
   return [v, set] as const;
 }
 
-const Ctx = createContext<Store | null>(null);
+/** Phone push notifications (app builds only; Expo Go and the website skip this). */
+async function registerForPush() {
+  if (Platform.OS === 'web') return;
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
+  if (!projectId) return; // set by `eas init`; without it Expo can't issue push tokens
+  try {
+    const N = await import('expo-notifications');
+    const Device = await import('expo-device');
+    if (!Device.isDevice) return;
+    const { status } = await N.requestPermissionsAsync();
+    if (status !== 'granted') return;
+    const { data } = await N.getExpoPushTokenAsync({ projectId });
+    await backend.registerPushToken(data);
+  } catch (e) {
+    console.warn('Push registration failed', e);
+  }
+}
+
+function browserNotify(l: Lead, title: string) {
+  if (Platform.OS !== 'web' || typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, { body: `${l.customerName} · ${l.items.map((i) => i.name).join(', ')}` });
+  } catch {}
+}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -53,8 +91,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [vendorList, setVendorList] = useState<Vendor[]>([]);
   const [me, setMe] = useState<Vendor | null>(null);
   const [email, setEmail] = useState<string | null>(null);
-  const [favorites, setFavorites] = usePersisted<string[]>(FAV_KEY, []);
-  const [quote, setQuote] = usePersisted<QuoteItem[]>(QUOTE_KEY, []);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [alert, setAlert] = useState<Lead | null>(null);
+  const [favorites, setFavorites] = usePersisted<string[]>('printingiq.favorites', []);
+  const [quote, setQuote] = usePersisted<QuoteItem[]>('printingiq.quote', []);
+  const [customerBox, setCustomerBox] = usePersisted<Customer | null>('printingiq.customer', null);
+  const alertTitle = useRef('PrintingIQ');
 
   const refresh = useCallback(async () => {
     try {
@@ -62,6 +104,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         backend.listProducts(), backend.listVendors(), backend.getMyVendor(), backend.currentUserEmail(),
       ]);
       setProducts(p); setVendorList(v); setMe(m); setEmail(e);
+      setLeads(m ? await backend.listMyLeads() : []);
     } catch (err) {
       console.warn('Failed to load data', err);
     } finally {
@@ -71,26 +114,59 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // While a vendor is signed in: live inquiries + push registration
+  useEffect(() => {
+    if (!me) return;
+    registerForPush();
+    return backend.subscribeLeads(me.id, (l) => {
+      setLeads((xs) => (xs.some((x) => x.id === l.id) ? xs : [l, ...xs]));
+      setAlert(l);
+      browserNotify(l, alertTitle.current);
+    });
+  }, [me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const value = useMemo<Store>(() => ({
     mode: backend.mode, loading, products, me, email, refresh,
     vendors: Object.fromEntries(vendorList.map((v) => [v.id, v])),
+    async signUpVendor(e, pw, v) { const r = await backend.signUpVendor(e, pw, v); await refresh(); return r; },
+    async signIn(e, pw) { await backend.signIn(e, pw); await refresh(); },
+    async signOut() { await backend.signOut(); await refresh(); },
+    async saveProfile(v) {
+      const saved = await backend.saveMyVendor(v);
+      setMe(saved);
+      setVendorList((xs) => [saved, ...xs.filter((x) => x.id !== saved.id)]);
+    },
     async addProduct(p) {
       const saved = await backend.addProduct(p);
       setProducts((xs) => [saved, ...xs]);
+      return saved;
+    },
+    async updateProduct(p) {
+      const saved = await backend.updateProduct(p);
+      setProducts((xs) => xs.map((x) => (x.id === saved.id ? saved : x)));
       return saved;
     },
     async deleteProduct(id) {
       await backend.deleteProduct(id);
       setProducts((xs) => xs.filter((p) => p.id !== id));
     },
-    async saveProfile(v) {
-      const saved = await backend.saveMyVendor(v);
-      setMe(saved);
-      setVendorList((xs) => [saved, ...xs.filter((x) => x.id !== saved.id)]);
+    leads,
+    unread: leads.filter((l) => !l.read).length,
+    async markRead(id) {
+      await backend.markLeadRead(id);
+      setLeads((xs) => xs.map((l) => (l.id === id ? { ...l, read: true } : l)));
     },
-    async signIn(e, pw) { await backend.signIn(e, pw); await refresh(); },
-    async signUp(e, pw) { await backend.signUp(e, pw); await refresh(); },
-    async signOut() { await backend.signOut(); await refresh(); },
+    alert,
+    dismissAlert: () => setAlert(null),
+    customer: customerBox,
+    async sendLead(l) {
+      setCustomerBox(() => ({ name: l.customerName, phone: l.customerPhone }));
+      try {
+        await backend.createLead(l);
+      } catch (e) {
+        console.warn('Could not record inquiry', e); // never stop the customer from reaching the vendor
+      }
+    },
     favorites,
     toggleFavorite: (id) => setFavorites((f) => (f.includes(id) ? f.filter((x) => x !== id) : [id, ...f])),
     quote,
@@ -100,7 +176,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     setQuoteQty: (id, qty) => setQuote((q) => (qty <= 0 ? q.filter((x) => x.productId !== id) : q.map((x) => (x.productId === id ? { ...x, qty } : x)))),
     clearQuote: (ids) => setQuote((q) => (ids ? q.filter((x) => !ids.includes(x.productId)) : [])),
-  }), [loading, products, vendorList, me, email, refresh, favorites, quote, setFavorites, setQuote]);
+  }), [loading, products, vendorList, me, email, refresh, leads, alert, customerBox, favorites, quote, setFavorites, setQuote, setCustomerBox]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

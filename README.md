@@ -26,11 +26,28 @@ npm start          # scan the QR code with the Expo Go app on your phone
 ```
 With no setup, the app runs in **demo mode**: it shows sample products, and anything a vendor adds is saved only on that device.
 
-## Go live (shared database, vendor accounts, image upload)
+## Go live (shared database, vendor accounts, inquiries, image upload)
 1. Create a free project at [supabase.com](https://supabase.com).
-2. In the SQL Editor, run `supabase/schema.sql`.
-3. Copy `.env.example` to `.env` and fill in your project URL and anon key.
-4. Restart the app. Vendors can now sign up, and their products and photos are shared with every user.
+2. In **SQL Editor**, run `supabase/schema.sql`. It's safe to run again after updates.
+3. In **Project Settings → API**, copy the *Project URL* and the *anon public* key:
+   - **Website:** add them in Netlify → Site configuration → Environment variables as
+     `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`, then redeploy.
+   - **Local / apps:** copy `.env.example` to `.env` and fill in the same two values.
+4. Optional: under **Authentication → Providers → Email**, turn off "Confirm email" so vendors can start immediately.
+
+### How vendors get notified
+When a customer taps **WhatsApp**, **Call** or **Send request** on the quote list, they enter their name and phone once. PrintingIQ then:
+1. saves an inquiry (`leads` table), which only that vendor can read;
+2. shows it live in the vendor dashboard (**Account → Inquiries**), with a badge and a pop-up alert, plus a browser notification on the website;
+3. sends a **push notification** to the vendor's phone app (after the steps below);
+4. opens WhatsApp with a message that starts "I found your product on PrintingIQ…" and includes the customer's name and phone.
+
+Phone push notifications need a real app build, not Expo Go:
+```bash
+npx eas-cli@latest init                                     # adds the projectId push needs
+npx supabase functions deploy notify-vendor --no-verify-jwt # sends the push when an inquiry arrives
+npx eas-cli@latest build -p android
+```
 
 ## Publish
 ```bash
@@ -45,17 +62,20 @@ src/app/(tabs)/index.tsx       Home: search, categories, latest products
 src/app/(tabs)/categories.tsx  All categories
 src/app/(tabs)/sell.tsx        Vendor form: 3-language name/description, colors, thickness, sizes, price, photos
 src/app/(tabs)/quote.tsx       Quote list → WhatsApp request per vendor
-src/app/(tabs)/account.tsx     Language, vendor shop profile, my products
+src/app/(tabs)/account.tsx     Vendor sign up / sign in, dashboard: inquiries, my products, shop profile
 src/app/search.tsx             Search + sort
 src/app/favorites.tsx          Saved products
 src/app/category/[id].tsx      Category listing with color filter
-src/app/product/[id].tsx       Product details + WhatsApp / call vendor
+src/app/product/[id].tsx       Product details, vendor card, contact (WhatsApp / call)
+src/app/vendor/[id].tsx        Vendor shop page
+src/components/contact.tsx     Contact sheet: records the inquiry, then opens WhatsApp or the dialer
 src/lib/                       i18n, catalog data, backend (demo or Supabase), store
-supabase/schema.sql            Database tables, security rules, image bucket
+supabase/schema.sql            Database tables, security rules, realtime, image bucket
+supabase/functions/            notify-vendor: push notification to the vendor's phone
 ```
 
 ## Suggested next steps
-- Phone number + SMS code login (more common than email in Iraq)
+- Phone number + SMS code login for vendors (more common than email in Iraq)
 - Admin panel to verify vendors and approve listings
 - Kurdish Kurmanji/Badini (Latin script) as a 4th language for Duhok
 - Search filters for city and price, and favorites
