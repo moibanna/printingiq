@@ -32,7 +32,7 @@ export function formatConverted(p: Pick<Product, 'price' | 'currency'>, ex: Exch
   return c ? `≈ ${formatPrice(c, lang)}` : null;
 }
 
-/** "1 $ = 1,515 IQD" */
+/** "1 $ = 1,692 IQD" */
 export function formatRate(ex: Exchange, lang: Lang): string {
   return `$1 = ${ex.iqdPerUsd.toLocaleString('en-US')} ${CUR.IQD[lang]}`;
 }

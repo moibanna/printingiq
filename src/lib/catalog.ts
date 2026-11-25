@@ -197,9 +197,9 @@ const empty: Localized = { en: '', ar: '', ckb: '' };
 /** Products in the daily catalog file may leave optional fields out to keep it small. */
 export type ImportedProduct = Partial<Product> & Pick<Product, 'id' | 'vendorId' | 'categoryId' | 'name'>;
 /** Daily USD → IQD rate written by the sync (scripts/sync/exchange.py). */
-export type Exchange = { iqdPerUsd: number; date?: string; source?: string; sourceUrl?: string; manual?: boolean };
+export type Exchange = { iqdPerUsd: number; date?: string; source?: string; sourceUrl?: string; manual?: boolean; market?: boolean };
 /** Used until the daily catalog has loaded (close to the Baghdad market rate in late 2026). */
-export const DEFAULT_EXCHANGE: Exchange = { iqdPerUsd: 1500 };
+export const DEFAULT_EXCHANGE: Exchange = { iqdPerUsd: 1690 };
 
 export type ImportedCatalog = { syncedAt?: string; exchange?: Exchange | null; vendors: Vendor[]; products: ImportedProduct[] };
 

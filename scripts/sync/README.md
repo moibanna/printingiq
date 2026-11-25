@@ -10,17 +10,22 @@ price was last checked.
 
 ## Dollar rate
 
-Each run also saves today's USD → IQD rate (from [ExchangeRate-API](https://www.exchangerate-api.com), which follows
-the market rate rather than the Central Bank's official rate). The app uses it to show every price in both
-currencies, to total quote lists and to sort by price. To use your own rate instead, for example today's Kifah
-market rate, set `"override": 1530` under `exchangeRate` in `sources.json` (set it back to `null` to go automatic).
-If the download fails, or the number is outside 1,000–3,000, yesterday's rate is kept.
+Prices are converted with the **market** rate (what exchange shops charge), not the Central Bank's official rate.
+It is read from [Shafaq News](https://shafaq.com/en/Economy)'s Baghdad/Erbil market report (the Al-Kifah / Al-Harithiya
+bourse price per $100), at 03:17 with the products and again at 17:47 Iraq time after the market closes. The app shows
+it as "Dollar market rate" and links to the report it came from.
+
+To use your own rate instead, for example what the Tak Nrx app or your exchange shop shows, set `"override": 1790`
+under `exchangeRate` in `sources.json` (set it back to `null` to go automatic).
+The previous rate is kept if the report can't be read, is more than 4 days old, is outside 1,000–3,000, or moves more
+than 20% in a day.
 
 ## Run it yourself
 
 ```bash
 python3 scripts/sync/sync.py            # every source
 python3 scripts/sync/sync.py toolmart   # just one (the others keep their last data)
+python3 scripts/sync/sync.py rate       # only the dollar rate
 python3 -m unittest discover -s scripts/sync
 ```
 

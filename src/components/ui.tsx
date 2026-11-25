@@ -210,6 +210,7 @@ export function WebHeader() {
 
 export function Footer() {
   const { t, tl } = useI18n();
+  const { exchange } = useStore();
   return (
     <View style={{ backgroundColor: C.primary, marginTop: 32 }}>
       <View style={[s.wrap, { flexDirection: 'row', flexWrap: 'wrap', gap: 40, paddingVertical: 36 }]}>
@@ -234,9 +235,13 @@ export function Footer() {
       </View>
       <View style={{ borderTopWidth: 1, borderColor: '#2B527F', paddingVertical: 14 }}>
         <Text style={{ color: '#9FB3CC', textAlign: 'center', fontSize: 12 }}>© {new Date().getFullYear()} PrintingIQ</Text>
-        <Pressable onPress={() => Linking.openURL('https://www.exchangerate-api.com')} accessibilityRole="link">
-          <Text style={{ color: '#7F96B2', textAlign: 'center', fontSize: 11, marginTop: 4 }}>{t('ratesBy')}</Text>
-        </Pressable>
+        {exchange.sourceUrl && !exchange.manual && (
+          <Pressable onPress={() => Linking.openURL(exchange.sourceUrl!)} accessibilityRole="link">
+            <Text style={{ color: '#7F96B2', textAlign: 'center', fontSize: 11, marginTop: 4 }}>
+              {t('ratesBy').replace('{source}', exchange.source || '')}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -375,7 +380,7 @@ export function VendorLine({ vendor, small }: { vendor?: Vendor; small?: boolean
   );
 }
 
-/** "Dollar rate today: $1 = 1,515 IQD · 2026-11-25", linking to the rate source (its terms ask for the link). */
+/** "Dollar market rate: $1 = 1,692 IQD · 2026-11-25", linking to the market report it came from. */
 export function RateBadge({ light }: { light?: boolean }) {
   const { t, lang } = useI18n();
   const { exchange } = useStore();
@@ -384,7 +389,7 @@ export function RateBadge({ light }: { light?: boolean }) {
   return (
     <Pressable
       onPress={exchange.sourceUrl ? () => Linking.openURL(exchange.sourceUrl!) : undefined}
-      accessibilityLabel={exchange.manual ? t('rateManual') : t('ratesBy')}
+      accessibilityLabel={exchange.manual ? t('rateManual') : t('ratesBy').replace('{source}', exchange.source || '')}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
     >
       <Icon name="refresh" size={13} color={color} />

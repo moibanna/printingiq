@@ -110,30 +110,54 @@ class Telegram(unittest.TestCase):
         self.assertIsNone(_post_product(src, '102', posts[1]['text'], posts[1]['images'], posts[1]['date'], posts[1]['url']))
 
 
+ARTICLE = """<script type="application/ld+json">{"datePublished": "2026-11-24T14:13:14+00:00"}</script>
+<p>The US dollar closed Tuesday&rsquo;s trading lower in Iraq, hovering around 169,000 dinars per 100 dollars.</p>
+<p>According to a Shafaq News market survey, the dollar traded in Baghdad&rsquo;s Al-Kifah and Al-Harithiya exchanges at
+168,900 dinars per 100 dollars, down from the morning session&rsquo;s 169,350 dinars.</p>
+<p>In the Iraqi capital, exchange shops sold the dollar at 169,500 dinars and bought it at 168,500 dinars, while in Erbil,
+selling prices stood at 169,450 dinars and buying prices at 169,350 dinars.</p>"""
+LISTING = '<a href="/en/Economy/Dollar-falls-in-Baghdad-Erbil-markets-1">x</a><a href="/en/Economy/Iranian-toman">y</a>'
+
+
 class ExchangeRate(unittest.TestCase):
     def setUp(self):
-        self._get = exchange.get
+        self._saved = exchange.get_text, exchange.allowed
+        exchange.allowed = lambda url: True
+        self.pages = {'https://shafaq.com/en/Economy': LISTING,
+                      'https://shafaq.com/en/Economy/Dollar-falls-in-Baghdad-Erbil-markets-1': ARTICLE}
+        exchange.get_text = lambda url: self.pages[url]
 
     def tearDown(self):
-        exchange.get = self._get
+        exchange.get_text, exchange.allowed = self._saved
 
-    def test_rate_from_source(self):
-        exchange.get = lambda url: {'result': 'success', 'rates': {'IQD': 1515.17}}
+    def test_parse_article(self):
+        self.assertEqual(exchange.parse_article(ARTICLE), (1689, '2026-11-24'))
+        self.assertEqual(exchange.parse_article('<p>sold the dollar at 179,000 dinars</p>'), (1790, ''))
+        self.assertIsNone(exchange.parse_article('<p>Oil prices rose</p>'))
+
+    def test_market_rate(self):
         rate, _ = exchange.daily_rate(None, None, '2026-11-25')
-        self.assertEqual((rate['iqdPerUsd'], rate['date'], rate['manual']), (1515, '2026-11-25', False))
+        self.assertEqual((rate['iqdPerUsd'], rate['date'], rate['manual'], rate['market']), (1689, '2026-11-24', False, True))
+        self.assertTrue(rate['sourceUrl'].endswith('Dollar-falls-in-Baghdad-Erbil-markets-1'))
+        # An old official-rate value doesn't block the switch to the market rate
+        rate, _ = exchange.daily_rate(None, {'iqdPerUsd': 1515, 'date': '2026-11-24'}, '2026-11-25')
+        self.assertEqual(rate['iqdPerUsd'], 1689)
 
     def test_manual_override(self):
-        rate, _ = exchange.daily_rate({'override': 1530}, None, '2026-11-25')
-        self.assertEqual((rate['iqdPerUsd'], rate['manual']), (1530, True))
+        rate, _ = exchange.daily_rate({'override': 1790}, None, '2026-11-25')
+        self.assertEqual((rate['iqdPerUsd'], rate['manual']), (1790, True))
 
     def test_bad_value_keeps_previous(self):
-        prev = {'iqdPerUsd': 1510, 'date': '2026-11-24'}
-        exchange.get = lambda url: {'result': 'success', 'rates': {'IQD': 15.1}}
-        self.assertEqual(exchange.daily_rate(None, prev, '2026-11-25')[0], prev)
+        prev = {'iqdPerUsd': 1700, 'date': '2026-11-24', 'market': True}
+        self.pages['https://shafaq.com/en/Economy/Dollar-falls-in-Baghdad-Erbil-markets-1'] = ARTICLE.replace('168,900', '99,000')
+        self.assertEqual(exchange.daily_rate(None, prev, '2026-11-25')[0], prev)  # 990: out of bounds
+        self.pages['https://shafaq.com/en/Economy/Dollar-falls-in-Baghdad-Erbil-markets-1'] = ARTICLE.replace('168,900', '258,900')
+        self.assertEqual(exchange.daily_rate(None, prev, '2026-11-25')[0], prev)  # +52% in a day
+        self.assertEqual(exchange.daily_rate(None, prev, '2026-12-25')[0], prev)  # report a month old
 
         def down(url):
             raise OSError('offline')
-        exchange.get = down
+        exchange.get_text = down
         self.assertEqual(exchange.daily_rate(None, prev, '2026-11-25')[0], prev)
 
 

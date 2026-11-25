@@ -1,8 +1,8 @@
 {
   "_help": "Shops and pages PrintingIQ imports every day. Add one entry per vendor; see scripts/sync/README.md for every option.",
   "exchangeRate": {
-    "_help": "Daily USD to IQD rate used to show every price in both currencies. Put a number in override (e.g. 1530) to use your own rate instead.",
-    "url": "https://open.er-api.com/v6/latest/USD", "override": null, "min": 1000, "max": 3000
+    "_help": "Daily USD to IQD MARKET rate (exchange-shop price, not the Central Bank rate), read from Shafaq News's Baghdad/Erbil market report. Put a number in override (e.g. 1790) to use your own rate instead; set it back to null for automatic.",
+    "marketPage": "https://shafaq.com/en/Economy", "override": null, "min": 1000, "max": 3000, "maxDailyChange": 0.2, "maxAgeDays": 4
   },
   "sources": [
     {
