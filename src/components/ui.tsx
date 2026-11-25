@@ -238,23 +238,36 @@ export function Footer() {
   );
 }
 
-/** Rotating banner on the home page, illustrated with line icons. */
+const HERO_BANNER = require('../../assets/hero-banner.jpg');
+const HERO_BANNER_RATIO = 2000 / 1116;
+
+/** Rotating banner on the home page: the PrintingIQ photo banner, then text slides illustrated with line icons. */
 export function HeroSlider() {
   const { t, arrow } = useI18n();
   const wide = useWide();
-  const slides: { title: StringKey; sub: StringKey; href: string; art: IconName[]; bg: string }[] = [
+  const slides: ({ photo: true; href: string } | { photo?: false; title: StringKey; sub: StringKey; href: string; art: IconName[]; bg: string })[] = [
+    { photo: true, href: '/categories' },
     { title: 'hero1Title', sub: 'hero1Sub', href: '/category/sign', art: ['acrylic', 'flex', 'vinyl'], bg: C.primary },
     { title: 'hero2Title', sub: 'hero2Sub', href: '/category/machines', art: ['large-format', 'laser-cnc', 'plotter'], bg: '#123F2F' },
     { title: 'hero3Title', sub: 'hero3Sub', href: '/category/promo', art: ['mugs', 'notebooks', 'trophies'], bg: '#5A2A0C' },
   ];
   const [i, setI] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setI((x) => (x + 1) % slides.length), 5000);
+    const id = setInterval(() => setI((x) => (x + 1) % slides.length), 6000);
     return () => clearInterval(id);
   }, [slides.length]);
   const sl = slides[i];
   return (
     <View>
+      {sl.photo ? (
+        <Link href={sl.href as never} asChild>
+          <Pressable accessibilityRole="link" accessibilityLabel="PrintingIQ"
+            style={{ width: '100%', aspectRatio: wide ? 2.6 : HERO_BANNER_RATIO, borderRadius: 16, overflow: 'hidden', backgroundColor: '#1D2B3A' }}>
+            {/* Wide screens show a shorter strip of the photo, centred on the PrintingIQ sign */}
+            <Image source={HERO_BANNER} resizeMode="cover" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+          </Pressable>
+        </Link>
+      ) : (
       <View style={[s.hero, { backgroundColor: sl.bg, minHeight: wide ? 250 : 180 }]}>
         <View style={[s.heroBlob, { width: 220, height: 220, top: -60, end: -40 }]} />
         <View style={{ flex: 1, gap: 10, zIndex: 1 }}>
@@ -276,9 +289,10 @@ export function HeroSlider() {
           </View>
         )}
       </View>
+      )}
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 }}>
         {slides.map((_, k) => (
-          <Pressable key={k} onPress={() => setI(k)} style={{ width: k === i ? 22 : 8, height: 8, borderRadius: 4, backgroundColor: k === i ? C.primary : '#C9CED6' }} />
+          <Pressable key={k} onPress={() => setI(k)} accessibilityLabel={`${k + 1}`} style={{ width: k === i ? 22 : 8, height: 8, borderRadius: 4, backgroundColor: k === i ? C.primary : '#C9CED6' }} />
         ))}
       </View>
     </View>
