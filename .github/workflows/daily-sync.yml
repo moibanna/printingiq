@@ -6,7 +6,7 @@ name: Daily catalog sync
 on:
   schedule:
     - cron: '17 0 * * *' # every day at 03:17 Iraq time (00:17 UTC): products, prices and the dollar rate
-    - cron: '0 7 * * *' # 10:00 Iraq time: the dollar rate only
+    - cron: '30 8 * * *' # 11:30 Iraq time, after the morning market report: the dollar rate only
     - cron: '0 12 * * *' # 15:00 Iraq time: the dollar rate only
   workflow_dispatch: {} # "Run workflow" button in the Actions tab
 
@@ -36,8 +36,8 @@ jobs:
           # Optional, only for Instagram sources (see scripts/sync/README.md)
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-        # The 10:00 and 15:00 runs pass "rate", which matches no vendor, so every vendor keeps its data and only the rate updates
-        run: python scripts/sync/sync.py ${{ (github.event.schedule == '0 7 * * *' || github.event.schedule == '0 12 * * *') && 'rate' || '' }}
+        # The 11:30 and 15:00 runs pass "rate", which matches no vendor, so every vendor keeps its data and only the rate updates
+        run: python scripts/sync/sync.py ${{ (github.event.schedule == '30 8 * * *' || github.event.schedule == '0 12 * * *') && 'rate' || '' }}
 
       - name: Save the new catalog
         run: |

@@ -12,7 +12,7 @@ price was last checked.
 
 Prices are converted with the **market** rate (what exchange shops charge), not the Central Bank's official rate.
 It is read from [Shafaq News](https://shafaq.com/en/Economy)'s Baghdad/Erbil market report (the Al-Kifah / Al-Harithiya
-bourse price per $100), every day at 10:00 and 15:00 Iraq time (and with the products at 03:17). The app shows
+bourse price per $100), every day at 11:30 and 15:00 Iraq time (and with the products at 03:17). The app shows
 it as "Dollar market rate" and links to the report it came from.
 
 To use your own rate instead, for example what the Tak Nrx app or your exchange shop shows, set `"override": 1790`
