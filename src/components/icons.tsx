@@ -1,6 +1,6 @@
 import {
   ArrowLeft, ArrowRight, Award, Backpack, BadgeCheck, BatteryCharging, Bell, Box, Calculator, Camera, Car, Check, CircleCheck,
-  ClipboardList, Clock, Coffee, Contact, Copy, CupSoda, Cylinder, DoorOpen, Droplet, Droplets, File, Files, Film, Flame, Folder,
+  ClipboardList, Clock, ExternalLink, Globe, RefreshCw, Coffee, Contact, Copy, CupSoda, Cylinder, DoorOpen, Droplet, Droplets, File, Files, Film, Flame, Folder,
   Frame, Gem, Gift, HardHat, Heart, House, IdCard, Image, Inbox, Info, KeyRound, Laptop, Layers, LayoutGrid, Lightbulb, LogOut,
   LucideIcon, Mail, MapPin, Medal, MessageCircle, Minus, Monitor, Newspaper, Notebook, Package, PaintBucket, Palette, PanelTop,
   Paperclip, Pen, Pencil, PenTool, Phone, Plus, Presentation, Printer, Receipt, Scissors, Scroll, ScrollText, Search, ShieldCheck,
@@ -15,7 +15,7 @@ export const ICONS = {
   home: House, grid: LayoutGrid, cart: ShoppingCart, plus: Plus, user: User, heart: Heart, search: Search,
   whatsapp: MessageCircle, phone: Phone, pin: MapPin, store: Store, bell: Bell, check: Check, close: X, minus: Minus,
   trash: Trash2, camera: Camera, info: Info, warning: TriangleAlert, mail: Mail, logout: LogOut, edit: Pencil, inbox: Inbox,
-  verified: BadgeCheck, ok: CircleCheck, star: Star, truck: Truck, arrowL: ArrowLeft, arrowR: ArrowRight,
+  verified: BadgeCheck, ok: CircleCheck, globe: Globe, external: ExternalLink, refresh: RefreshCw, star: Star, truck: Truck, arrowL: ArrowLeft, arrowR: ArrowRight,
   // Category groups
   sign: Signpost, machines: Printer, ink: Palette, services: Receipt, stationery: Pencil, promo: Gift, awards: Trophy, apparel: Shirt,
   // Subcategories

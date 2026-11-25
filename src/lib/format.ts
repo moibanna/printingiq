@@ -23,3 +23,14 @@ export function intlPhone(phone: string): string {
   if (d.startsWith('0')) return '964' + d.slice(1);
   return d;
 }
+
+/** "2026-11-25": a date that reads the same in Kurdish, Arabic and English. */
+export function shortDate(iso?: string): string {
+  return iso ? iso.slice(0, 10) : '';
+}
+
+/** "toolmart.me" from "https://www.toolmart.me/products/…" */
+export function hostOf(url: string): string {
+  const m = /^[a-z]+:\/\/(?:www\.)?([^/?#]+)/i.exec(url);
+  return m ? m[1] : url;
+}

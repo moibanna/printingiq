@@ -4,6 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { Platform } from 'react-native';
 import { backend, LeadInput, VendorInput } from './backend';
 import { Lead, Product, Vendor } from './catalog';
+import { loadImportedCatalog } from './importedCatalog';
 
 export type QuoteItem = { productId: string; qty: number };
 export type Customer = { name: string; phone: string };
@@ -48,9 +49,14 @@ const Ctx = createContext<Store | null>(null);
 type Loaded = { products: Product[]; vendors: Vendor[]; me: Vendor | null; email: string | null; leads: Lead[] };
 async function loadAll(): Promise<Loaded | null> {
   try {
-    const [products, vendors, me, email] = await Promise.all([
-      backend.listProducts(), backend.listVendors(), backend.getMyVendor(), backend.currentUserEmail(),
+    const [own, ownVendors, imported, me, email] = await Promise.all([
+      backend.listProducts(), backend.listVendors(), loadImportedCatalog(), backend.getMyVendor(), backend.currentUserEmail(),
     ]);
+    // Vendors' own listings first, then the catalog copied daily from vendors' websites and pages.
+    // A vendor who has an account here wins over the copied profile with the same id.
+    const ids = new Set(ownVendors.map((v) => v.id));
+    const vendors = [...ownVendors, ...imported.vendors.filter((v) => !ids.has(v.id))];
+    const products = [...own, ...imported.products];
     return { products, vendors, me, email, leads: me ? await backend.listMyLeads() : [] };
   } catch (err) {
     console.warn('Failed to load data', err);

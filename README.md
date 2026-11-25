@@ -9,6 +9,7 @@ A marketplace for print, sign and stationery supplies in Iraq. Vendors list prod
 - **Product cards** show the product code, color dots, stock quantity, price, and badges for "out of stock" and "custom order"
 - **Sorting** by newest, price (low/high, with IQD and USD compared together) and stock, plus subcategory and color filters
 - **Favorites (♡) and a quote list (🛒):** the quote list sends each vendor one itemized WhatsApp message, since that's how orders are agreed in Iraq
+- **Daily catalog sync:** every night, products, prices and contact details are copied from Iraqi vendors' websites, Shopify/WooCommerce shops, public Telegram channels and Instagram business accounts (`scripts/sync/`, see its README). Each listing links to the original and shows the date its price was checked
 - **Website layout on desktop** (top contact bar, header, slider, footer) and **app layout on phones** (bottom tabs)
 
 ## Languages
@@ -70,6 +71,8 @@ src/app/product/[id].tsx       Product details, vendor card, contact (WhatsApp /
 src/app/vendor/[id].tsx        Vendor shop page
 src/components/contact.tsx     Contact sheet: records the inquiry, then opens WhatsApp or the dialer
 src/lib/                       i18n, catalog data, backend (demo or Supabase), store
+public/catalog.json            Daily catalog copied from vendors' sites (written by scripts/sync, loaded at startup)
+scripts/sync/                  Daily sync: sources.json lists the vendors; runs from .github/workflows/daily-sync.yml
 supabase/schema.sql            Database tables, security rules, realtime, image bucket
 supabase/functions/            notify-vendor: push notification to the vendor's phone
 ```

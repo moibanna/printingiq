@@ -1,0 +1,30 @@
+{
+  "_help": "Shops and pages PrintingIQ imports every day. Add one entry per vendor; see scripts/sync/README.md for every option.",
+  "sources": [
+    {
+      "id": "printway", "adapter": "printway", "enabled": true,
+      "name": "Print Way", "city": "", "phone": "", "website": "https://www.print-way.com",
+      "about": "Sign & print materials, inks, machines and promotional items. Catalog imported from print-way.com."
+    },
+    {
+      "id": "365promo", "adapter": "365promo", "enabled": true,
+      "name": "365 Promo", "city": "Erbil", "phone": "07723656565", "whatsapp": "07723656565", "email": "info@365promo.net",
+      "website": "https://www.365promo.net",
+      "about": "Promotional products, corporate gifts and signage. 30m Street, Erbil. Catalog imported from 365promo.net."
+    },
+    {
+      "id": "penna", "adapter": "penna", "enabled": true,
+      "name": "Penna", "city": "Erbil", "phone": "07506770777", "whatsapp": "07506770777", "website": "https://penna-iq.com",
+      "about": "بۆ بابەتی پرۆمۆشن · Promotional products. Erbil, near General Education Street. Catalog imported from penna-iq.com."
+    },
+    {
+      "id": "toolmart", "adapter": "shopify", "enabled": true,
+      "name": "Toolmart", "city": "Basra", "phone": "07807229999", "whatsapp": "07807229999", "email": "info@toolmart.me",
+      "website": "https://toolmart.me", "url": "https://toolmart.me", "currency": "IQD",
+      "collections": ["zebra", "brother", "deli", "moleskine", "pens-pen-sets", "paint-ink-markers", "notebooks-diaries",
+                      "tech-portfolios-notebooks", "الادوات-المكتبية-والكتابة", "toolmart-gifts", "الهدايا-الترويجية", "casio"],
+      "skipBrands": ["Brady"],
+      "about": "B2B supplier: label & office printers, Deli stationery, pens, notebooks and corporate gifts. Sharikat Street, Basra. Catalog imported from toolmart.me."
+    }
+  ]
+}

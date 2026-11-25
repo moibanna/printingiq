@@ -1,4 +1,3 @@
-import imported from '../data/imported.json';
 import type { Localized } from './i18n';
 
 export type Unit = 'sheet' | 'm2' | 'roll' | 'piece' | 'box' | 'pack' | 'kg' | 'liter';
@@ -145,6 +144,12 @@ export type Vendor = {
   email?: string;
   about?: string;
   verified?: boolean;
+  /** Vendor's own website or social page */
+  website?: string;
+  /** Listing copied daily from the vendor's public website / social posts (scripts/sync), not managed by the vendor here */
+  imported?: boolean;
+  /** When that copy was last refreshed (ISO date) */
+  syncedAt?: string;
 };
 
 /** A customer reaching out to a vendor through PrintingIQ. Vendors see these in their dashboard. */
@@ -183,24 +188,27 @@ export type Product = {
   availability: Availability;
   images: string[];
   createdAt: string;
+  /** Original listing (shop page or social post) for imported products */
+  sourceUrl?: string;
 };
 
 const empty: Localized = { en: '', ar: '', ckb: '' };
 
-/**
- * Demo catalog: the public catalogs of Print Way, 365 Promo and Penna, imported with scripts/import_vendors.py.
- * Missing optional fields are filled in here so the rest of the app can rely on them.
- */
-type ImportedProduct = Partial<Product> & Pick<Product, 'id' | 'vendorId' | 'categoryId' | 'name'>;
-const data = imported as unknown as { vendors: Vendor[]; products: ImportedProduct[] };
+/** Products in the daily catalog file may leave optional fields out to keep it small. */
+export type ImportedProduct = Partial<Product> & Pick<Product, 'id' | 'vendorId' | 'categoryId' | 'name'>;
+export type ImportedCatalog = { syncedAt?: string; vendors: Vendor[]; products: ImportedProduct[] };
 
-export const SEED_VENDORS: Vendor[] = data.vendors;
-
-export const SEED_PRODUCTS: Product[] = data.products.map((x) => ({
-  description: { ...empty }, price: null, currency: 'USD', unit: 'piece', colors: [], thickness: [], sizes: [],
-  availability: 'in_stock', images: [], createdAt: '2026-11-01T00:00:00Z',
-  ...x,
-}));
+/** Fills in the fields the daily catalog leaves out, so the rest of the app can rely on them. */
+export function fromImported(data: ImportedCatalog): { vendors: Vendor[]; products: Product[] } {
+  return {
+    vendors: data.vendors ?? [],
+    products: (data.products ?? []).map((x) => ({
+      description: { ...empty }, price: null, currency: 'USD', unit: 'piece', colors: [], thickness: [], sizes: [],
+      availability: 'in_stock', images: [], createdAt: '2026-11-01T00:00:00Z',
+      ...x,
+    })),
+  };
+}
 
 export function emptyProduct(vendorId: string): Product {
   return {

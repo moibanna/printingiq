@@ -1,12 +1,12 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { ProductBrowser } from '../../components/browser';
 import { ContactSheet } from '../../components/contact';
 import { Icon } from '../../components/icons';
 import { Text } from '../../components/text';
 import { Button, cityName, Muted, s, Screen } from '../../components/ui';
-import { intlPhone } from '../../lib/format';
+import { hostOf, intlPhone, shortDate } from '../../lib/format';
 import { useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
 import { C } from '../../lib/theme';
@@ -45,6 +45,17 @@ export default function VendorScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="grid" size={14} color={C.muted} /><Muted>{list.length} {t('productsCount')}</Muted>
             </View>
+            {!!v.website && (
+              <Pressable onPress={() => Linking.openURL(v.website!)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="globe" size={14} color={C.primary} />
+                <Text style={{ color: C.primary, fontSize: 13, fontWeight: '600' }}>{hostOf(v.website)}</Text>
+              </Pressable>
+            )}
+            {v.imported && !!v.syncedAt && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="refresh" size={14} color={C.muted} /><Muted>{t('priceChecked').replace('{date}', shortDate(v.syncedAt))}</Muted>
+              </View>
+            )}
           </View>
           {v.about ? <Text style={{ color: C.text, fontSize: 13, lineHeight: 24 }}>{v.about}</Text> : null}
         </View>

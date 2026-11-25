@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
-import { Lead, Product, SEED_PRODUCTS, SEED_VENDORS, Vendor } from './catalog';
+import { Lead, Product, Vendor } from './catalog';
 
 /**
  * Two backends behind one interface:
@@ -61,10 +61,10 @@ const localListeners = new Set<(l: Lead) => void>();
 const localBackend: Backend = {
   mode: 'local',
   async listProducts() {
-    return [...(await readJSON<Product[]>(K.products, [])), ...SEED_PRODUCTS];
+    return readJSON<Product[]>(K.products, []);
   },
   async listVendors() {
-    return [...(await readJSON<Vendor[]>(K.vendors, [])), ...SEED_VENDORS];
+    return readJSON<Vendor[]>(K.vendors, []);
   },
   async currentUserEmail() {
     return (await readJSON<LocalAccount | null>(K.session, null))?.email ?? null;

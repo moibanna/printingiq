@@ -1,26 +1,13 @@
 #!/usr/bin/env python3
 """
-Imports the public catalogs of three Iraqi print/promo vendors into PrintingIQ's demo data:
+Importers for vendors whose websites have their own catalog API:
   Print Way (print-way.com), 365 Promo (365promo.net), Penna (penna-iq.com)
-
-Writes src/data/imported.json  ->  { "vendors": [...], "products": [...] }
-
-Run again any time to refresh prices, stock and new products:
-    python3 scripts/import_vendors.py
-Once the Supabase database is live, the same data can be inserted there instead.
+Each importer returns PrintingIQ products. Vendor details live in sources.json; sync.py runs everything.
 """
-import json
 import re
-import urllib.request
-from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / 'src' / 'data' / 'imported.json'
+from http_util import get
 
-
-def get(url):
-    req = urllib.request.Request(url, headers={'User-Agent': 'PrintingIQ-catalog-import', 'Accept': 'application/json'})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read().decode('utf-8'))
 
 
 def clean(s):
@@ -51,16 +38,6 @@ def product(**kw):
     """Drop empty optional fields to keep the bundle small."""
     return {k: v for k, v in kw.items() if v not in (None, '', [], {})}
 
-
-VENDORS = [
-    {'id': 'printway', 'name': 'Print Way', 'city': '', 'phone': '',
-     'about': 'Sign & print materials, inks, machines and promotional items. Catalog imported from print-way.com.'},
-    {'id': '365promo', 'name': '365 Promo', 'city': 'Erbil', 'phone': '07723656565', 'whatsapp': '07723656565',
-     'email': 'info@365promo.net',
-     'about': 'Promotional products, corporate gifts and signage. 30m Street, Erbil. Catalog imported from 365promo.net.'},
-    {'id': 'penna', 'name': 'Penna', 'city': 'Erbil', 'phone': '07506770777', 'whatsapp': '07506770777',
-     'about': 'بۆ بابەتی پرۆمۆشن · Promotional products. Erbil, near General Education Street. Catalog imported from penna-iq.com.'},
-]
 
 # ───────────────────────── Print Way
 def pw_category(cat, name):
@@ -105,7 +82,7 @@ def pw_category(cat, name):
     }.get(cat)
 
 
-def import_printway():
+def import_printway(src):
     items, page = [], 1
     while True:
         batch = get(f'https://print-way.com/api/productRegistrations/ProductWholeSale?currentPage={page}&pageSize=100')
@@ -122,7 +99,7 @@ def import_printway():
         qty = num(price.get('remainQuantity'))
         imgs = [i['imageName'] for i in (x.get('productImages') or [])] or ([x['thumbnail']] if x.get('thumbnail') else [])
         out.append(product(
-            id=f"pw-{x['barcode']}", vendorId='printway', categoryId=cat,
+            id=f"pw-{x['barcode']}", vendorId=src['id'], categoryId=cat,
             name=loc(en=name), description=loc(en=x.get('description'), ar=x.get('arabicDescription'), ckb=x.get('kurdishDescription')),
             price=num(price.get('unitPrice')) or None, currency='USD', unit='piece',
             colors=[], thickness=[], sizes=[clean(x['size'])] if clean(x.get('size')) else [],
@@ -162,7 +139,7 @@ def color_365(c):
     return {'hex': c.get('colorCode') or '#CCCCCC', 'name': loc(c.get('enName'), c.get('arName'), c.get('kuName'))}
 
 
-def import_365():
+def import_365(src):
     items, page = [], 1
     while True:
         d = get(f'https://api.365promo.net/api/v1/products?page={page}&limit=100&isActive=true')
@@ -181,7 +158,7 @@ def import_365():
                 seen.add(c['colorCode']); colors.append(color_365(c))
         qty = None if x.get('isHasNoQty') else num(x.get('quantity'))
         out.append(product(
-            id=f"365-{x['id']}", vendorId='365promo', categoryId=cat,
+            id=f"365-{x['id']}", vendorId=src['id'], categoryId=cat,
             name=loc(en, x.get('arName'), x.get('kuName')), description=loc(en=x.get('description')),
             price=num(x.get('salesPrice')) or None, currency='USD', unit='piece',
             colors=colors, thickness=[], sizes=[], sku=x.get('code'), stockQty=qty,
@@ -211,7 +188,7 @@ def penna_category(kurdish, name_en):
     return PENNA.get(kurdish)
 
 
-def import_penna():
+def import_penna(src):
     items, page = [], 1
     while True:
         d = get(f'https://penna-iq.com/api/store/items?page={page}&pageSize=200&language=kurdish&currency=USD')
@@ -233,7 +210,7 @@ def import_penna():
         qty = num(x.get('totalQuantity')) if x.get('showQuantityInWebsite') else None
         imgs = [u for u in [x.get('imageData')] + [g if isinstance(g, str) else (g or {}).get('url') for g in (x.get('itemGallery') or [])] if u]
         out.append(product(
-            id=f"pn-{x['_id']}", vendorId='penna', categoryId=cat, name=name,
+            id=f"pn-{x['_id']}", vendorId=src['id'], categoryId=cat, name=name,
             description=loc(x.get('descriptionEnglish'), x.get('descriptionArabic'), x.get('descriptionKurdish')),
             price=(num(x.get('sellPriceUSD')) or None) if x.get('showPriceInWebsite') else None, currency='USD', unit='piece',
             minOrder=None, colors=colors, thickness=[], sizes=[], brand=clean(x.get('brand')), origin=clean(x.get('country')),
@@ -244,10 +221,4 @@ def import_penna():
     return out
 
 
-if __name__ == '__main__':
-    products = import_printway() + import_365() + import_penna()
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({'vendors': VENDORS, 'products': products}, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-    by = {}
-    for p in products: by[p['vendorId']] = by.get(p['vendorId'], 0) + 1
-    print(f'Wrote {len(products)} products to {OUT}: {by}')
+ADAPTERS = {'printway': import_printway, '365promo': import_365, 'penna': import_penna}

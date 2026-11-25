@@ -23,19 +23,33 @@ export function sortProducts(list: Product[], sort: Sort): Product[] {
   return xs.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-/** Matches all three languages at once, plus code, brand, category and color names. */
+/** Folds spelling variants so Arabic/Kurdish searches match either form (أ/ا, ى/ي, ة/ه, ک/ك, ی/ي, ٣/3…). */
+export function foldText(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآ]/g, 'ا').replace(/[ىی]/g, 'ي').replace(/ة/g, 'ه').replace(/ک/g, 'ك').replace(/[ەھ]/g, 'ه')
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+}
+
+/** Query words; Arabic "ال"/"وال" prefixes are dropped so "طابعة ملصقات" also finds "طابعة الملصقات". */
+function queryWords(q: string): string[] {
+  return foldText(q).split(/\s+/).filter(Boolean).map((w) => (w.length > 4 ? w.replace(/^(وال|ال)/, '') : w));
+}
+
+/** Matches all three languages at once, plus code, brand, category and color names. Every word must match. */
 export function searchProducts(list: Product[], q: string): Product[] {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return list;
+  const words = queryWords(q);
+  if (!words.length) return list;
   return list.filter((p) => {
     const cat = categoryById(p.categoryId);
     const grp = cat && groupById(cat.group);
-    const hay = [
+    const hay = foldText([
       ...LANGS.map((l) => p.name[l]), ...LANGS.map((l) => p.description[l]),
       ...(cat ? LANGS.map((l) => cat.name[l]) : []), ...(grp ? LANGS.map((l) => grp.name[l]) : []),
       p.brand ?? '', p.sku ?? '', ...p.colors.flatMap((c) => LANGS.map((l) => c.name[l])),
-    ].join(' ').toLowerCase();
-    return hay.includes(needle);
+    ].join(' '));
+    return words.every((w) => hay.includes(w));
   });
 }
 

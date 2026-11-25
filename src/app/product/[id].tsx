@@ -1,12 +1,12 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { ContactSheet } from '../../components/contact';
 import { Icon } from '../../components/icons';
 import { Text, TextInput } from '../../components/text';
 import { AvailabilityBadge, Button, Chip, cityName, FavButton, H, Muted, ProductThumb, s, Screen, Swatches } from '../../components/ui';
-import { categoryById, groupById } from '../../lib/catalog';
-import { formatPrice, intlPhone, unitKey } from '../../lib/format';
+import { categoryById, groupById, Product, Vendor } from '../../lib/catalog';
+import { formatPrice, hostOf, intlPhone, shortDate, unitKey } from '../../lib/format';
 import { useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
 import { C } from '../../lib/theme';
@@ -72,6 +72,7 @@ export default function ProductScreen() {
           <Button variant="outline" icon="phone" title={t('call')} style={{ flex: 1 }} onPress={() => setContact(true)} />
         </View>
       )}
+      <SourceNote product={p} vendor={v} />
     </View>
   ) : null;
 
@@ -161,6 +162,34 @@ export default function ProductScreen() {
         />
       )}
     </Screen>
+  );
+}
+
+/** For listings copied from a vendor's website or social page: where it came from and when the price was checked. */
+function SourceNote({ product, vendor }: { product: Product; vendor: Vendor }) {
+  const { t } = useI18n();
+  const url = product.sourceUrl || vendor.website;
+  if (!vendor.imported && !url) return null;
+  return (
+    <View style={{ borderTopWidth: 1, borderColor: C.border, paddingTop: 10, marginTop: 4, gap: 6 }}>
+      {vendor.imported && (
+        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+          <Icon name="refresh" size={14} color={C.muted} />
+          <Muted style={{ flex: 1, fontSize: 12, lineHeight: 20 }}>
+            {vendor.syncedAt ? t('priceChecked').replace('{date}', shortDate(vendor.syncedAt)) + ' · ' : ''}{t('importedNote')}
+          </Muted>
+        </View>
+      )}
+      {!!url && (
+        <Pressable onPress={() => Linking.openURL(url)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Icon name="external" size={14} color={C.primary} />
+          <Text style={{ color: C.primary, fontSize: 13, fontWeight: '600' }}>
+            {product.sourceUrl ? t('viewOriginal') : t('vendorSite')}
+          </Text>
+          <Muted style={{ fontSize: 12 }}>· {hostOf(url)}</Muted>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
