@@ -238,61 +238,51 @@ export function Footer() {
   );
 }
 
-const HERO_BANNER = require('../../assets/hero-banner.jpg');
-const HERO_BANNER_RATIO = 2000 / 1116;
+/** Home banner slides: the PrintingIQ photo, then three photo slides explaining how the site works. */
+const HERO_SLIDES: { img: number; href: string; text?: { title: StringKey; sub: StringKey; cta: StringKey } }[] = [
+  { img: require('../../assets/hero-banner.jpg'), href: '/categories' },
+  { img: require('../../assets/hero-browse.jpg'), href: '/categories', text: { title: 'hero1Title', sub: 'hero1Sub', cta: 'hero1Cta' } },
+  { img: require('../../assets/hero-contact.jpg'), href: '/search', text: { title: 'hero2Title', sub: 'hero2Sub', cta: 'hero2Cta' } },
+  { img: require('../../assets/hero-sell.jpg'), href: '/sell', text: { title: 'hero3Title', sub: 'hero3Sub', cta: 'hero3Cta' } },
+];
 
-/** Rotating banner on the home page: the PrintingIQ photo banner, then text slides illustrated with line icons. */
 export function HeroSlider() {
   const { t, arrow } = useI18n();
   const wide = useWide();
-  const slides: ({ photo: true; href: string } | { photo?: false; title: StringKey; sub: StringKey; href: string; art: IconName[]; bg: string })[] = [
-    { photo: true, href: '/categories' },
-    { title: 'hero1Title', sub: 'hero1Sub', href: '/category/sign', art: ['acrylic', 'flex', 'vinyl'], bg: C.primary },
-    { title: 'hero2Title', sub: 'hero2Sub', href: '/category/machines', art: ['large-format', 'laser-cnc', 'plotter'], bg: '#123F2F' },
-    { title: 'hero3Title', sub: 'hero3Sub', href: '/category/promo', art: ['mugs', 'notebooks', 'trophies'], bg: '#5A2A0C' },
-  ];
   const [i, setI] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setI((x) => (x + 1) % slides.length), 6000);
+    const id = setInterval(() => setI((x) => (x + 1) % HERO_SLIDES.length), 6000);
     return () => clearInterval(id);
-  }, [slides.length]);
-  const sl = slides[i];
+  }, []);
+  const sl = HERO_SLIDES[i];
+  const frame = { width: '100%', aspectRatio: wide ? 2.6 : 1.6, borderRadius: 16, overflow: 'hidden', backgroundColor: '#1D2B3A' } as const;
+  // Explicit width/height: on web a bundled image otherwise keeps its own pixel size.
+  const photo = <Image source={sl.img} resizeMode="cover" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />;
   return (
     <View>
-      {sl.photo ? (
-        <Link href={sl.href as never} asChild>
-          <Pressable accessibilityRole="link" accessibilityLabel="PrintingIQ"
-            style={{ width: '100%', aspectRatio: wide ? 2.6 : HERO_BANNER_RATIO, borderRadius: 16, overflow: 'hidden', backgroundColor: '#1D2B3A' }}>
-            {/* Wide screens show a shorter strip of the photo, centred on the PrintingIQ sign */}
-            <Image source={HERO_BANNER} resizeMode="cover" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
-          </Pressable>
-        </Link>
-      ) : (
-      <View style={[s.hero, { backgroundColor: sl.bg, minHeight: wide ? 250 : 180 }]}>
-        <View style={[s.heroBlob, { width: 220, height: 220, top: -60, end: -40 }]} />
-        <View style={{ flex: 1, gap: 10, zIndex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: wide ? 30 : 20, fontWeight: '800', lineHeight: wide ? 50 : 34 }}>{t(sl.title)}</Text>
-          <Text style={{ color: '#DCE6F2', fontSize: wide ? 15 : 13, maxWidth: 520, lineHeight: 24 }}>{t(sl.sub)}</Text>
-          <Link href={sl.href as never} asChild>
-            <Pressable style={flat(s.btn, { backgroundColor: C.accent, alignSelf: 'flex-start', marginTop: 6 })}>
-              <Text style={[s.btnText, { color: '#fff' }]}>{t('shopNow')} {arrow}</Text>
-            </Pressable>
-          </Link>
-        </View>
-        {wide && (
-          <View style={{ flexDirection: 'row', gap: 16, zIndex: 1 }}>
-            {sl.art.map((a) => (
-              <View key={a} style={{ width: 92, height: 92, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={a} size={46} color="#fff" strokeWidth={1.5} />
-              </View>
-            ))}
+      {sl.text ? (
+        <View style={frame}>
+          {photo}
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(8,28,52,0.7)' }} />
+          <View style={{ flex: 1, justifyContent: 'center', gap: wide ? 12 : 8, padding: wide ? 40 : 18, maxWidth: wide ? 640 : undefined }}>
+            <Text style={{ color: '#fff', fontSize: wide ? 32 : 19, fontWeight: '800', lineHeight: wide ? 52 : 32 }}>{t(sl.text.title)}</Text>
+            <Text numberOfLines={3} style={{ color: '#E4ECF5', fontSize: wide ? 16 : 13, lineHeight: wide ? 28 : 22 }}>{t(sl.text.sub)}</Text>
+            <Link href={sl.href as never} asChild>
+              <Pressable style={flat(s.btn, { backgroundColor: C.accent, alignSelf: 'flex-start', marginTop: wide ? 8 : 2 })}>
+                <Text style={[s.btnText, { color: '#fff' }]}>{t(sl.text.cta)} {arrow}</Text>
+              </Pressable>
+            </Link>
           </View>
-        )}
-      </View>
+        </View>
+      ) : (
+        <Link href={sl.href as never} asChild>
+          <Pressable accessibilityRole="link" accessibilityLabel="PrintingIQ" style={frame}>{photo}</Pressable>
+        </Link>
       )}
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 }}>
-        {slides.map((_, k) => (
-          <Pressable key={k} onPress={() => setI(k)} accessibilityLabel={`${k + 1}`} style={{ width: k === i ? 22 : 8, height: 8, borderRadius: 4, backgroundColor: k === i ? C.primary : '#C9CED6' }} />
+        {HERO_SLIDES.map((_, k) => (
+          <Pressable key={k} onPress={() => setI(k)} accessibilityLabel={`${k + 1}`} hitSlop={6}
+            style={{ width: k === i ? 22 : 8, height: 8, borderRadius: 4, backgroundColor: k === i ? C.primary : '#C9CED6' }} />
         ))}
       </View>
     </View>
