@@ -1,4 +1,4 @@
-import type { Currency, Product } from './catalog';
+import type { Currency, Exchange, Product } from './catalog';
 import type { Lang, StringKey } from './i18n';
 
 const CUR: Record<Currency, Record<Lang, string>> = {
@@ -12,6 +12,29 @@ export function formatPrice(p: Pick<Product, 'price' | 'currency'>, lang: Lang):
   const frac = Number.isInteger(p.price) ? 0 : 2;
   const n = p.price.toLocaleString('en-US', { minimumFractionDigits: frac, maximumFractionDigits: 2 });
   return p.currency === 'USD' ? `$${n}` : `${n} ${CUR.IQD[lang]}`;
+}
+
+/** Price in the other currency at today's rate. Dinars are rounded the way shops quote them (to 250, or 50 under 5,000). */
+export function convertPrice(p: Pick<Product, 'price' | 'currency'>, ex: Exchange): { price: number; currency: Currency } | null {
+  if (p.price == null || !ex.iqdPerUsd) return null;
+  if (p.currency === 'USD') {
+    const iqd = p.price * ex.iqdPerUsd;
+    const step = iqd >= 5000 ? 250 : 50;
+    return { price: Math.max(step, Math.round(iqd / step) * step), currency: 'IQD' };
+  }
+  const usd = p.price / ex.iqdPerUsd;
+  return { price: usd >= 100 ? Math.round(usd) : Math.round(usd * 100) / 100, currency: 'USD' };
+}
+
+/** "≈ $237" / "≈ 359,000 IQD": the same price in the other currency. */
+export function formatConverted(p: Pick<Product, 'price' | 'currency'>, ex: Exchange, lang: Lang): string | null {
+  const c = convertPrice(p, ex);
+  return c ? `≈ ${formatPrice(c, lang)}` : null;
+}
+
+/** "1 $ = 1,515 IQD" */
+export function formatRate(ex: Exchange, lang: Lang): string {
+  return `$1 = ${ex.iqdPerUsd.toLocaleString('en-US')} ${CUR.IQD[lang]}`;
 }
 
 export const unitKey = (u: Product['unit']) => `unit_${u}` as StringKey;

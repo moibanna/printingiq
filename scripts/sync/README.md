@@ -8,6 +8,14 @@ Netlify then republishes the website, and the phone apps download the new catalo
 Each product page shows where the listing came from (link to the original shop page or post) and the date the
 price was last checked.
 
+## Dollar rate
+
+Each run also saves today's USD → IQD rate (from [ExchangeRate-API](https://www.exchangerate-api.com), which follows
+the market rate rather than the Central Bank's official rate). The app uses it to show every price in both
+currencies, to total quote lists and to sort by price. To use your own rate instead, for example today's Kifah
+market rate, set `"override": 1530` under `exchangeRate` in `sources.json` (set it back to `null` to go automatic).
+If the download fails, or the number is outside 1,000–3,000, yesterday's rate is kept.
+
 ## Run it yourself
 
 ```bash

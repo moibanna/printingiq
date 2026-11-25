@@ -2,7 +2,7 @@ import { Link, router } from 'expo-router';
 import { ReactNode, useEffect, useState } from 'react';
 import { Image, Linking, Platform, Pressable, ScrollView, StyleSheet, TextInputProps, useWindowDimensions, View, ViewStyle } from 'react-native';
 import { Category, CITIES, ColorOption, Group, GROUPS, Product, tintOf, Vendor } from '../lib/catalog';
-import { formatPrice, unitKey } from '../lib/format';
+import { formatConverted, formatPrice, formatRate, shortDate, unitKey } from '../lib/format';
 import { LANG_LABEL, LANGS, StringKey, useI18n } from '../lib/i18n';
 import { useStore } from '../lib/store';
 import { C, MAX_W, R } from '../lib/theme';
@@ -176,6 +176,7 @@ export function WebHeader() {
       <View style={{ backgroundColor: C.accentSoft }}>
         <View style={[s.wrap, { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 16 }]}>
           <LangSwitcher compact />
+          <RateBadge />
           <View style={{ flex: 1 }} />
           <Pressable onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon name="whatsapp" size={15} color={C.success} />
@@ -233,6 +234,9 @@ export function Footer() {
       </View>
       <View style={{ borderTopWidth: 1, borderColor: '#2B527F', paddingVertical: 14 }}>
         <Text style={{ color: '#9FB3CC', textAlign: 'center', fontSize: 12 }}>© {new Date().getFullYear()} PrintingIQ</Text>
+        <Pressable onPress={() => Linking.openURL('https://www.exchangerate-api.com')} accessibilityRole="link">
+          <Text style={{ color: '#7F96B2', textAlign: 'center', fontSize: 11, marginTop: 4 }}>{t('ratesBy')}</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -371,10 +375,31 @@ export function VendorLine({ vendor, small }: { vendor?: Vendor; small?: boolean
   );
 }
 
+/** "Dollar rate today: $1 = 1,515 IQD · 2026-11-25", linking to the rate source (its terms ask for the link). */
+export function RateBadge({ light }: { light?: boolean }) {
+  const { t, lang } = useI18n();
+  const { exchange } = useStore();
+  if (!exchange.date) return null;
+  const color = light ? '#DCE6F2' : C.muted;
+  return (
+    <Pressable
+      onPress={exchange.sourceUrl ? () => Linking.openURL(exchange.sourceUrl!) : undefined}
+      accessibilityLabel={exchange.manual ? t('rateManual') : t('ratesBy')}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+    >
+      <Icon name="refresh" size={13} color={color} />
+      <Text style={{ fontSize: 12, color }}>{t('dollarRate')}:</Text>
+      <Text style={{ fontSize: 12, color: light ? '#fff' : C.text, fontWeight: '700', direction: 'ltr' } as object}>{formatRate(exchange, lang)}</Text>
+      <Text style={{ fontSize: 11, color }}>· {shortDate(exchange.date)}</Text>
+    </Pressable>
+  );
+}
+
 export function ProductCard({ product }: { product: Product }) {
   const { t, tl, lang } = useI18n();
-  const { addToQuote, quote, vendors } = useStore();
+  const { addToQuote, quote, vendors, exchange } = useStore();
   const price = formatPrice(product, lang);
+  const alt = formatConverted(product, exchange, lang);
   const inQuote = quote.some((q) => q.productId === product.id);
   const out = product.availability === 'out_of_stock';
   return (
@@ -394,10 +419,13 @@ export function ProductCard({ product }: { product: Product }) {
       </Link>
       <View style={{ paddingHorizontal: 10, paddingTop: 4 }}><VendorLine vendor={vendors[product.vendorId]} small /></View>
       <View style={s.cardFoot}>
-        <Text style={s.price} numberOfLines={1}>
-          {price ?? t('askPrice')}
-          {price ? <Text style={{ fontSize: 10, color: C.muted }}> / {t(unitKey(product.unit))}</Text> : null}
-        </Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={s.price} numberOfLines={1}>
+            {price ?? t('askPrice')}
+            {price ? <Text style={{ fontSize: 10, color: C.muted }}> / {t(unitKey(product.unit))}</Text> : null}
+          </Text>
+          {alt ? <Text numberOfLines={1} style={{ fontSize: 11, color: C.muted, lineHeight: 18 }}>{alt}</Text> : null}
+        </View>
         <Pressable
           disabled={out}
           onPress={() => addToQuote(product.id, product.minOrder ?? 1)}

@@ -6,7 +6,7 @@ import { Icon } from '../../components/icons';
 import { Text, TextInput } from '../../components/text';
 import { AvailabilityBadge, Button, Chip, cityName, FavButton, H, Muted, ProductThumb, s, Screen, Swatches } from '../../components/ui';
 import { categoryById, groupById, Product, Vendor } from '../../lib/catalog';
-import { formatPrice, hostOf, intlPhone, shortDate, unitKey } from '../../lib/format';
+import { formatConverted, formatPrice, formatRate, hostOf, intlPhone, shortDate, unitKey } from '../../lib/format';
 import { useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
 import { C } from '../../lib/theme';
@@ -14,7 +14,7 @@ import { C } from '../../lib/theme';
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, tl, lang, arrow } = useI18n();
-  const { products, vendors, addToQuote, quote, me } = useStore();
+  const { products, vendors, addToQuote, quote, me, exchange } = useStore();
   const { width } = useWindowDimensions();
   const [qty, setQty] = useState(1);
   const [contact, setContact] = useState(false);
@@ -25,6 +25,7 @@ export default function ProductScreen() {
   const cat = categoryById(p.categoryId);
   const group = cat && groupById(cat.group);
   const price = formatPrice(p, lang);
+  const alt = formatConverted(p, exchange, lang);
   const wide = width > 820;
   const inQuote = quote.find((q) => q.productId === p.id);
   const minQ = p.minOrder ?? 1;
@@ -105,6 +106,17 @@ export default function ProductScreen() {
             {price ? `${price} ` : t('askPrice')}
             {price ? <Text style={{ fontSize: 13, color: C.muted }}>{t('per')} {t(unitKey(p.unit))}</Text> : null}
           </Text>
+          {alt ? (
+            <View style={{ gap: 2 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: C.text }}>{alt}</Text>
+              <Muted style={{ fontSize: 11, lineHeight: 18 }}>
+                {t('rateNote')
+                  .replace('{rate}', formatRate(exchange, lang) + (exchange.manual ? ` · ${t('rateManual')}` : ''))
+                  .replace('{date}', shortDate(exchange.date) || '—')
+                  .replace('{cur}', t(p.currency === 'USD' ? 'curDollar' : 'curDinar'))}
+              </Muted>
+            </View>
+          ) : null}
 
           {!wide && VendorCard}
 

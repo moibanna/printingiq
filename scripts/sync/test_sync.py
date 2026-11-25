@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from classify import category_for, find_price, lang_of  # noqa: E402
 from generic import _post_product, parse_telegram  # noqa: E402
+import exchange  # noqa: E402
 
 
 class Categories(unittest.TestCase):
@@ -107,6 +108,33 @@ class Telegram(unittest.TestCase):
         self.assertEqual(p['sourceUrl'], 'https://t.me/signshop/101')
         # A greeting post without a product photo is skipped
         self.assertIsNone(_post_product(src, '102', posts[1]['text'], posts[1]['images'], posts[1]['date'], posts[1]['url']))
+
+
+class ExchangeRate(unittest.TestCase):
+    def setUp(self):
+        self._get = exchange.get
+
+    def tearDown(self):
+        exchange.get = self._get
+
+    def test_rate_from_source(self):
+        exchange.get = lambda url: {'result': 'success', 'rates': {'IQD': 1515.17}}
+        rate, _ = exchange.daily_rate(None, None, '2026-11-25')
+        self.assertEqual((rate['iqdPerUsd'], rate['date'], rate['manual']), (1515, '2026-11-25', False))
+
+    def test_manual_override(self):
+        rate, _ = exchange.daily_rate({'override': 1530}, None, '2026-11-25')
+        self.assertEqual((rate['iqdPerUsd'], rate['manual']), (1530, True))
+
+    def test_bad_value_keeps_previous(self):
+        prev = {'iqdPerUsd': 1510, 'date': '2026-11-24'}
+        exchange.get = lambda url: {'result': 'success', 'rates': {'IQD': 15.1}}
+        self.assertEqual(exchange.daily_rate(None, prev, '2026-11-25')[0], prev)
+
+        def down(url):
+            raise OSError('offline')
+        exchange.get = down
+        self.assertEqual(exchange.daily_rate(None, prev, '2026-11-25')[0], prev)
 
 
 if __name__ == '__main__':

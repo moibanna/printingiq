@@ -1,5 +1,5 @@
 import { ActivityIndicator, View } from 'react-native';
-import { GroupTile, HeroSlider, ProductGrid, Screen, SearchBox, SectionTitle, useColumns, useWide, VendorCta } from '../../components/ui';
+import { GroupTile, HeroSlider, ProductGrid, RateBadge, Screen, SearchBox, SectionTitle, useColumns, useWide, VendorCta } from '../../components/ui';
 import { GROUPS } from '../../lib/catalog';
 import { useI18n } from '../../lib/i18n';
 import { inCategory, sortProducts } from '../../lib/query';
@@ -7,15 +7,16 @@ import { useStore } from '../../lib/store';
 
 export default function Home() {
   const { t } = useI18n();
-  const { products, loading } = useStore();
+  const { products, loading, exchange } = useStore();
   const wide = useWide();
   const cols = useColumns();
   const groupCols = wide ? 4 : 2;
-  const latest = sortProducts(products, 'newest').slice(0, cols * 2);
+  const latest = sortProducts(products, 'newest', exchange.iqdPerUsd).slice(0, cols * 2);
 
   return (
     <Screen>
       {!wide && <SearchBox />}
+      {!wide && <RateBadge />}
       <HeroSlider />
 
       <SectionTitle title={t('categories')} href="/categories" />

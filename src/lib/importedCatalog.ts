@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { fromImported, ImportedCatalog, Product, Vendor } from './catalog';
+import { Exchange, fromImported, ImportedCatalog, Product, Vendor } from './catalog';
 
 /**
  * The catalog copied every day from Iraqi vendors' websites and social pages (scripts/sync writes public/catalog.json).
@@ -11,7 +11,7 @@ import { fromImported, ImportedCatalog, Product, Vendor } from './catalog';
 const CATALOG_URL = process.env.EXPO_PUBLIC_CATALOG_URL || (Platform.OS === 'web' ? '/catalog.json' : '');
 const MAX_AGE = 60 * 60 * 1000; // re-download at most once an hour per app session
 
-type Loaded = { vendors: Vendor[]; products: Product[]; syncedAt?: string };
+type Loaded = { vendors: Vendor[]; products: Product[]; syncedAt?: string; exchange?: Exchange };
 let cache: { at: number; data: Loaded } | null = null;
 
 export async function loadImportedCatalog(): Promise<Loaded> {
@@ -21,7 +21,7 @@ export async function loadImportedCatalog(): Promise<Loaded> {
     const res = await fetch(CATALOG_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const raw = (await res.json()) as ImportedCatalog;
-    const data = { ...fromImported(raw), syncedAt: raw.syncedAt };
+    const data = { ...fromImported(raw), syncedAt: raw.syncedAt, exchange: raw.exchange ?? undefined };
     cache = { at: Date.now(), data };
     return data;
   } catch (e) {

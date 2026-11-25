@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { backend, LeadInput, VendorInput } from './backend';
-import { Lead, Product, Vendor } from './catalog';
+import { DEFAULT_EXCHANGE, Exchange, Lead, Product, Vendor } from './catalog';
 import { loadImportedCatalog } from './importedCatalog';
 
 export type QuoteItem = { productId: string; qty: number };
@@ -13,6 +13,8 @@ type Store = {
   mode: 'local' | 'supabase';
   loading: boolean;
   products: Product[];
+  /** Today's USD → IQD rate, for showing every price in both currencies */
+  exchange: Exchange;
   vendors: Record<string, Vendor>;
   refresh: () => Promise<void>;
   // Vendor session
@@ -46,7 +48,7 @@ type Store = {
 
 const Ctx = createContext<Store | null>(null);
 
-type Loaded = { products: Product[]; vendors: Vendor[]; me: Vendor | null; email: string | null; leads: Lead[] };
+type Loaded = { products: Product[]; vendors: Vendor[]; me: Vendor | null; email: string | null; leads: Lead[]; exchange?: Exchange };
 async function loadAll(): Promise<Loaded | null> {
   try {
     const [own, ownVendors, imported, me, email] = await Promise.all([
@@ -57,7 +59,7 @@ async function loadAll(): Promise<Loaded | null> {
     const ids = new Set(ownVendors.map((v) => v.id));
     const vendors = [...ownVendors, ...imported.vendors.filter((v) => !ids.has(v.id))];
     const products = [...own, ...imported.products];
-    return { products, vendors, me, email, leads: me ? await backend.listMyLeads() : [] };
+    return { products, vendors, me, email, leads: me ? await backend.listMyLeads() : [], exchange: imported.exchange };
   } catch (err) {
     console.warn('Failed to load data', err);
     return null;
@@ -112,13 +114,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [alert, setAlert] = useState<Lead | null>(null);
+  const [exchange, setExchange] = useState<Exchange>(DEFAULT_EXCHANGE);
   const [favorites, setFavorites] = usePersisted<string[]>('printingiq.favorites', []);
   const [quote, setQuote] = usePersisted<QuoteItem[]>('printingiq.quote', []);
   const [customerBox, setCustomerBox] = usePersisted<Customer | null>('printingiq.customer', null);
   const alertTitle = useRef('PrintingIQ');
 
   const apply = useCallback((d: Loaded | null) => {
-    if (d) { setProducts(d.products); setVendorList(d.vendors); setMe(d.me); setEmail(d.email); setLeads(d.leads); }
+    if (d) {
+      setProducts(d.products); setVendorList(d.vendors); setMe(d.me); setEmail(d.email); setLeads(d.leads);
+      if (d.exchange?.iqdPerUsd) setExchange(d.exchange);
+    }
     setLoading(false);
   }, []);
   const refresh = useCallback(async () => apply(await loadAll()), [apply]);
@@ -141,7 +147,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo<Store>(() => ({
-    mode: backend.mode, loading, products, me, email, refresh,
+    mode: backend.mode, loading, products, exchange, me, email, refresh,
     vendors: Object.fromEntries(vendorList.map((v) => [v.id, v])),
     async signUpVendor(e, pw, v) { const r = await backend.signUpVendor(e, pw, v); await refresh(); return r; },
     async signIn(e, pw) { await backend.signIn(e, pw); await refresh(); },
@@ -191,7 +197,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     setQuoteQty: (id, qty) => setQuote((q) => (qty <= 0 ? q.filter((x) => x.productId !== id) : q.map((x) => (x.productId === id ? { ...x, qty } : x)))),
     clearQuote: (ids) => setQuote((q) => (ids ? q.filter((x) => !ids.includes(x.productId)) : [])),
-  }), [loading, products, vendorList, me, email, refresh, leads, alert, customerBox, favorites, quote, setFavorites, setQuote, setCustomerBox]);
+  }), [loading, products, exchange, vendorList, me, email, refresh, leads, alert, customerBox, favorites, quote, setFavorites, setQuote, setCustomerBox]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

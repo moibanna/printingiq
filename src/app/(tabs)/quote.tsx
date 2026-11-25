@@ -6,7 +6,7 @@ import { Icon } from '../../components/icons';
 import { Text } from '../../components/text';
 import { Button, Muted, ProductThumb, s, Screen, SectionTitle, VendorLine } from '../../components/ui';
 import { Product, Vendor } from '../../lib/catalog';
-import { formatPrice, unitKey } from '../../lib/format';
+import { convertPrice, formatConverted, formatPrice, unitKey } from '../../lib/format';
 import { useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
 import { C } from '../../lib/theme';
@@ -14,7 +14,7 @@ import { C } from '../../lib/theme';
 /** Orders in this market are agreed on WhatsApp, so the quote list sends one itemized request per vendor. */
 export default function QuoteScreen() {
   const { t, tl, lang } = useI18n();
-  const { quote, products, vendors, setQuoteQty, clearQuote } = useStore();
+  const { quote, products, vendors, setQuoteQty, clearQuote, exchange } = useStore();
   const [sending, setSending] = useState<{ vendor: Vendor; items: ContactItem[] } | null>(null);
 
   const items = quote
@@ -31,10 +31,16 @@ export default function QuoteScreen() {
       {[...byVendor.entries()].map(([vendorId, list]) => {
         const v = vendors[vendorId];
         const priced = list.filter((x) => x.product.price != null);
+        // Total in the vendor's main currency (mixed lists are added up in dinars at today's rate), plus the other currency
         const currencies = new Set(priced.map((x) => x.product.currency));
-        const total = currencies.size === 1
-          ? formatPrice({ price: priced.reduce((sum, x) => sum + x.product.price! * x.qty, 0), currency: [...currencies][0] }, lang)
-          : null;
+        const cur = currencies.size === 1 ? [...currencies][0] : 'IQD';
+        const sum = priced.reduce((acc, x) => {
+          const unit = x.product.currency === cur ? x.product.price! : convertPrice(x.product, exchange)!.price;
+          return acc + unit * x.qty;
+        }, 0);
+        const totalP = { price: cur === 'USD' ? Math.round(sum * 100) / 100 : sum, currency: cur };
+        const total = priced.length ? formatPrice(totalP, lang) : null;
+        const totalAlt = priced.length ? formatConverted(totalP, exchange, lang) : null;
         return (
           <View key={vendorId} style={s.panel}>
             <VendorLine vendor={v} />
@@ -46,7 +52,10 @@ export default function QuoteScreen() {
                 <View style={{ flex: 1, gap: 1 }}>
                   <Text numberOfLines={2} style={{ fontWeight: '600', color: C.text, fontSize: 13 }}>{tl(p.name)}</Text>
                   {p.sku ? <Text style={{ fontSize: 10, color: C.muted }}>{t('code')}: {p.sku}</Text> : null}
-                  <Text style={{ color: C.primary, fontWeight: '700', fontSize: 13 }}>{formatPrice(p, lang) ?? t('askPrice')}</Text>
+                  <Text style={{ color: C.primary, fontWeight: '700', fontSize: 13 }}>
+                    {formatPrice(p, lang) ?? t('askPrice')}
+                    {p.price != null ? <Text style={{ color: C.muted, fontWeight: '400', fontSize: 11 }}>  {formatConverted(p, exchange, lang)}</Text> : null}
+                  </Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Pressable style={stepper} onPress={() => setQuoteQty(p.id, qty - 1)}><Icon name="minus" size={15} color={C.primary} /></Pressable>
@@ -55,7 +64,12 @@ export default function QuoteScreen() {
                 </View>
               </View>
             ))}
-            {total && <Text style={{ fontWeight: '700', color: C.text, fontSize: 13 }}>{t('estTotal')}: <Text style={{ color: C.primary, fontWeight: '700' }}>{total}</Text></Text>}
+            {total && (
+              <Text style={{ fontWeight: '700', color: C.text, fontSize: 13 }}>
+                {t('estTotal')}: <Text style={{ color: C.primary, fontWeight: '700' }}>{total}</Text>
+                {totalAlt ? <Text style={{ color: C.muted, fontWeight: '400' }}>  {totalAlt}</Text> : null}
+              </Text>
+            )}
             <View style={s.row}>
               <Button
                 variant="whatsapp" icon="whatsapp" title={t('sendWhatsApp')} disabled={!v?.phone} style={{ flexGrow: 1 }}

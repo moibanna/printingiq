@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { Text } from './text';
 import { Category, ColorOption, Product } from '../lib/catalog';
 import { useI18n } from '../lib/i18n';
+import { useStore } from '../lib/store';
 import { inCategory, Sort, SORT_LABEL, SORTS, sortProducts } from '../lib/query';
 import { C } from '../lib/theme';
 import { Button, Chip, ProductGrid } from './ui';
@@ -12,6 +13,7 @@ const PAGE = 40;
 /** Product list with sorting, an optional subcategory row and a color filter built from the listed products. */
 export function ProductBrowser({ products, subcategories }: { products: Product[]; subcategories?: Category[] }) {
   const { t, tl } = useI18n();
+  const { exchange } = useStore();
   const [sort, setSort] = useState<Sort>('newest');
   const [sub, setSub] = useState<string | null>(null);
   const [color, setColor] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export function ProductBrowser({ products, subcategories }: { products: Product[
     base.forEach((p) => p.colors.forEach((c) => m.set(c.hex, c)));
     return [...m.values()];
   }, [base]);
-  const shown = sortProducts(color ? base.filter((p) => p.colors.some((c) => c.hex === color)) : base, sort);
+  const shown = sortProducts(color ? base.filter((p) => p.colors.some((c) => c.hex === color)) : base, sort, exchange.iqdPerUsd);
 
   return (
     <View style={{ gap: 10 }}>

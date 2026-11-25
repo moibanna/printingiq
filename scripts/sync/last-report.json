@@ -1,13 +1,14 @@
 {
- "ranAt": "2026-11-25T08:26:31Z",
+ "ranAt": "2026-11-25T08:36:57Z",
  "total": 1975,
+ "exchangeRate": "1515 IQD per USD",
  "sources": [
   {
    "id": "printway",
    "ok": true,
    "products": 540,
    "before": 540,
-   "seconds": 7
+   "seconds": 6
   },
   {
    "id": "365promo",
@@ -27,7 +28,7 @@
    "id": "toolmart",
    "ok": true,
    "products": 785,
-   "before": 819,
+   "before": 785,
    "seconds": 34
   }
  ]

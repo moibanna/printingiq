@@ -1,15 +1,14 @@
-import { categoriesOf, categoryById, groupById, Product } from './catalog';
+import { categoriesOf, categoryById, DEFAULT_EXCHANGE, groupById, Product } from './catalog';
 import { LANGS } from './i18n';
 
 export type Sort = 'newest' | 'priceLow' | 'priceHigh' | 'stock';
 export const SORTS: Sort[] = ['newest', 'priceLow', 'priceHigh', 'stock'];
 export const SORT_LABEL = { newest: 'sortNewest', priceLow: 'sortPriceLow', priceHigh: 'sortPriceHigh', stock: 'sortStock' } as const;
 
-/** Rough market rate, only used to sort IQD and USD prices together. */
-const IQD_PER_USD = 1400;
-const priceIQD = (p: Product) => (p.price == null ? null : p.currency === 'USD' ? p.price * IQD_PER_USD : p.price);
 
-export function sortProducts(list: Product[], sort: Sort): Product[] {
+/** Sorts by price across currencies using today's dollar rate. */
+export function sortProducts(list: Product[], sort: Sort, iqdPerUsd = DEFAULT_EXCHANGE.iqdPerUsd): Product[] {
+  const priceIQD = (p: Product) => (p.price == null ? null : p.currency === 'USD' ? p.price * iqdPerUsd : p.price);
   const xs = [...list];
   const byPrice = (dir: 1 | -1) => (a: Product, b: Product) => {
     const pa = priceIQD(a), pb = priceIQD(b);

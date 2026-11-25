@@ -22,6 +22,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import custom  # noqa: E402
+import exchange  # noqa: E402
 import generic  # noqa: E402
 
 ROOT = HERE.parent.parent
@@ -42,7 +43,8 @@ def vendor_of(src: dict, synced_at: str | None) -> dict:
 
 
 def main(only: list[str]):
-    sources = [s for s in json.loads((HERE / 'sources.json').read_text(encoding='utf-8'))['sources'] if s.get('enabled', True)]
+    config = json.loads((HERE / 'sources.json').read_text(encoding='utf-8'))
+    sources = [s for s in config['sources'] if s.get('enabled', True)]
     old = json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else {'vendors': [], 'products': []}
     old_products: dict[str, list] = {}
     for p in old['products']:
@@ -78,15 +80,18 @@ def main(only: list[str]):
             print(f'✗ {sid}: {e} — kept {len(prev)} previous products', file=sys.stderr)
             traceback.print_exc(limit=2)
 
+    rate, rate_msg = exchange.daily_rate(config.get('exchangeRate'), old.get('exchange'), now[:10])
+    print(f'$ exchange rate: {rate_msg}')
+
     seen, unique = set(), []
     for p in products:
         if p['id'] not in seen:
             seen.add(p['id'])
             unique.append(p)
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({'syncedAt': now, 'vendors': vendors, 'products': unique}, ensure_ascii=False, separators=(',', ':')),
+    OUT.write_text(json.dumps({'syncedAt': now, 'exchange': rate, 'vendors': vendors, 'products': unique}, ensure_ascii=False, separators=(',', ':')),
                    encoding='utf-8')
-    REPORT.write_text(json.dumps({'ranAt': now, 'total': len(unique), 'sources': report}, ensure_ascii=False, indent=1) + '\n',
+    REPORT.write_text(json.dumps({'ranAt': now, 'total': len(unique), 'exchangeRate': rate_msg, 'sources': report}, ensure_ascii=False, indent=1) + '\n',
                       encoding='utf-8')
     print(f'Wrote {len(unique)} products from {len(vendors)} vendors to {OUT.relative_to(ROOT)}')
     # Fail the run (so GitHub shows it) only when nothing could be imported at all
