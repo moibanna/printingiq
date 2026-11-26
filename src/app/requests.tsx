@@ -1,6 +1,7 @@
 import { Link, router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { Icon } from '../components/icons';
+import { RateVendors } from '../components/ratings';
 import { Text } from '../components/text';
 import { Button, Muted, s, Screen } from '../components/ui';
 import { useI18n } from '../lib/i18n';
@@ -13,6 +14,7 @@ export default function MyRequests() {
   const { myRequests } = useStore();
   return (
     <Screen>
+      <RateVendors />
       <Button variant="accent" icon="send" title={t('getOffers')} onPress={() => router.push('/request')} />
       {!myRequests.length && <Muted>{t('noRequests')}</Muted>}
       <View style={[s.panel, { padding: 0, gap: 0 }]}>

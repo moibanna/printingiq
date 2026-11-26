@@ -242,7 +242,7 @@ function Dashboard() {
 
 export default function Account() {
   const { t } = useI18n();
-  const { me, favorites, loading } = useStore();
+  const { me, favorites, loading, myRequests, myContacts } = useStore();
   return (
     <Screen>
       <View style={[s.panel, { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }]}>
@@ -251,6 +251,9 @@ export default function Account() {
         <LangSwitcher />
       </View>
       <Button variant="ghost" icon="heart" title={`${t('favorites')} (${favorites.length})`} onPress={() => router.push('/favorites')} />
+      {!me && (myRequests.length > 0 || myContacts.length > 0) && (
+        <Button variant="ghost" icon="star" title={t('myRequestsRatings')} onPress={() => router.push('/requests')} />
+      )}
       {loading ? null : me ? <Dashboard /> : <Auth />}
     </Screen>
   );

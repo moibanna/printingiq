@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import type { ProductDraft } from './bulkImport';
-import { Attachment, Lead, Offer, Product, QuoteRequest, ShopLink, Vendor } from './catalog';
+import { Attachment, Lead, Offer, Product, QuoteRequest, Review, ShopLink, Vendor, VendorRating } from './catalog';
 
 /**
  * Two backends behind one interface:
@@ -66,6 +66,10 @@ export interface Backend {
   listMyLinks(): Promise<ShopLink[]>;
   addLink(l: Pick<ShopLink, 'kind' | 'url' | 'sourceId'>): Promise<ShopLink>;
   removeLink(id: string): Promise<void>;
+  // Ratings: only a customer who contacted the vendor through PrintingIQ can rate them, once per inquiry
+  listRatings(): Promise<Record<string, VendorRating>>;
+  listReviews(vendorId: string): Promise<Review[]>;
+  addReview(r: { leadId: string; customerPhone: string; stars: number; comment?: string }): Promise<void>;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -74,7 +78,7 @@ const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(
 const K = {
   products: 'printingiq.products', vendors: 'printingiq.vendors', accounts: 'printingiq.accounts',
   session: 'printingiq.session', leads: 'printingiq.leads', requests: 'printingiq.requests', offers: 'printingiq.offers',
-  links: 'printingiq.links',
+  links: 'printingiq.links', reviews: 'printingiq.reviews',
 };
 type LocalAccount = { email: string; password: string; vendorId: string };
 
@@ -231,7 +235,31 @@ const localBackend: Backend = {
   async removeLink(id) {
     await writeJSON(K.links, (await readJSON<ShopLink[]>(K.links, [])).filter((l) => l.id !== id));
   },
+  async listRatings() {
+    return ratingsOf(await readJSON<Review[]>(K.reviews, []));
+  },
+  async listReviews(vendorId) {
+    return (await readJSON<Review[]>(K.reviews, [])).filter((r) => r.vendorId === vendorId);
+  },
+  async addReview({ leadId, customerPhone, stars, comment }) {
+    const lead = (await readJSON<Lead[]>(K.leads, [])).find((l) => l.id === leadId && l.customerPhone === customerPhone);
+    if (!lead) throw new Error('Not found');
+    const reviews = await readJSON<(Review & { leadId: string })[]>(K.reviews, []);
+    if (reviews.some((r) => r.leadId === leadId)) return;
+    const review = { id: uid(), leadId, vendorId: lead.vendorId, stars, comment, customerName: lead.customerName, createdAt: new Date().toISOString() };
+    await writeJSON(K.reviews, [review, ...reviews]);
+  },
 };
+
+function ratingsOf(reviews: Review[]): Record<string, VendorRating> {
+  const out: Record<string, VendorRating> = {};
+  for (const r of reviews) {
+    const x = (out[r.vendorId] ??= { avg: 0, count: 0 });
+    x.avg = (x.avg * x.count + r.stars) / (x.count + 1);
+    x.count++;
+  }
+  return out;
+}
 
 // ---------- Supabase backend ----------
 type ProductRow = {
@@ -462,6 +490,20 @@ function supabaseBackend(url: string, key: string): Backend {
     },
     async removeLink(lid) {
       must(await sb.from('shop_links').delete().eq('id', lid));
+    },
+    async listRatings() {
+      const rows = must(await sb.from('vendor_ratings').select('*')) as { vendor_id: string; avg: number; count: number }[];
+      return Object.fromEntries(rows.map((r) => [r.vendor_id, { avg: Number(r.avg), count: r.count }]));
+    },
+    async listReviews(vendorId) {
+      type Row = { id: string; vendor_id: string; stars: number; comment: string | null; customer_name: string; created_at: string };
+      return (must(await sb.from('reviews').select('id,vendor_id,stars,comment,customer_name,created_at').eq('vendor_id', vendorId)
+        .order('created_at', { ascending: false }).limit(50)) as Row[]).map((r) => ({
+        id: r.id, vendorId: r.vendor_id, stars: r.stars, comment: r.comment ?? undefined, customerName: r.customer_name, createdAt: r.created_at,
+      }));
+    },
+    async addReview({ leadId, customerPhone, stars, comment }) {
+      must(await sb.rpc('add_review', { p_lead_id: leadId, p_phone: customerPhone, p_stars: stars, p_comment: comment ?? null }));
     },
     async aiAssist(input) {
       const { data, error } = await sb.functions.invoke('ai-assist', { body: input });

@@ -299,6 +299,16 @@ const strings = {
   linkUnsupported: { en: "Facebook pages, WhatsApp and OpenSooq can't be imported. Use a price list or photos instead.", ar: "لا يمكن استيراد صفحات فيسبوك وواتساب والسوق المفتوح. استخدم قائمة أسعار أو صوراً بدلاً من ذلك.", ckb: "پەڕەی فەیسبووک، واتسئەپ و OpenSooq ناهێنرێن. لە جیاتی ئەوە لیستی نرخ یان وێنە بەکاربهێنە." },
   fromLink: { en: "My website, Telegram or Instagram", ar: "موقعي أو تلغرام أو إنستغرام", ckb: "ماڵپەڕ، تێلێگرام یان ئینستاگرامەکەم" },
   fromLinkSub: { en: "Copied every night automatically, after approval.", ar: "تُنسخ تلقائياً كل ليلة بعد الموافقة.", ckb: "دوای پەسەندکردن هەموو شەوێک خۆکار کۆپی دەکرێت." },
+  rateVendors: { en: "Rate vendors you contacted", ar: "قيّم البائعين الذين تواصلت معهم", ckb: "هەڵسەنگاندنی ئەو فرۆشیارانەی پەیوەندیت پێوە کردن" },
+  rateVendorsSub: { en: "Your rating helps other customers choose. Only people who contacted the vendor through PrintingIQ can rate.", ar: "تقييمك يساعد الزبائن الآخرين على الاختيار. فقط من تواصل مع البائع عبر PrintingIQ يمكنه التقييم.", ckb: "هەڵسەنگاندنەکەت یارمەتی کڕیارانی تر دەدات. تەنها ئەوانەی لە ڕێگەی PrintingIQ پەیوەندییان کردووە دەتوانن هەڵیسەنگێنن." },
+  contactedOn: { en: "Contacted {date}", ar: "تواصلت في {date}", ckb: "پەیوەندیت کرد لە {date}" },
+  yourComment: { en: "Comment (optional)", ar: "تعليق (اختياري)", ckb: "تێبینی (ئارەزوومەندانە)" },
+  sendRating: { en: "Send rating", ar: "أرسل التقييم", ckb: "ناردنی هەڵسەنگاندن" },
+  thanksRating: { en: "Thanks for your rating!", ar: "شكراً لتقييمك!", ckb: "سوپاس بۆ هەڵسەنگاندنەکەت!" },
+  reviews: { en: "Customer reviews", ar: "آراء الزبائن", ckb: "ڕای کڕیاران" },
+  noReviews: { en: "No reviews yet.", ar: "لا توجد آراء بعد.", ckb: "هێشتا هیچ ڕایەک نییە." },
+  ratingsCount: { en: "{n} ratings", ar: "{n} تقييم", ckb: "{n} هەڵسەنگاندن" },
+  myRequestsRatings: { en: "My requests & ratings", ar: "طلباتي وتقييماتي", ckb: "داواکاری و هەڵسەنگاندنەکانم" },
 } satisfies Record<string, Localized>;
 
 export type StringKey = keyof typeof strings;

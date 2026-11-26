@@ -370,6 +370,35 @@ export const cityName = (city: string, tl: ReturnType<typeof useI18n>['tl']) => 
 };
 
 /** "Shop name ✓ · City" line used on cards. */
+/** ★★★★☆ display; with onChange it becomes a tappable picker. */
+export function Stars({ value, size = 14, onChange }: { value: number; size?: number; onChange?: (n: number) => void }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: onChange ? 6 : 1, direction: 'ltr' } as object}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const on = n <= Math.round(value);
+        const star = <Icon name="star" size={size} color={on ? '#F5A524' : '#D0D5DD'} fill={on ? '#F5A524' : undefined} strokeWidth={1.6} />;
+        return onChange
+          ? <Pressable key={n} onPress={() => onChange(n)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`${n}`}>{star}</Pressable>
+          : <View key={n}>{star}</View>;
+      })}
+    </View>
+  );
+}
+
+/** "★ 4.6 (12)" for a vendor, or nothing before their first rating. */
+export function RatingBadge({ vendorId, small }: { vendorId: string; small?: boolean }) {
+  const { ratings } = useStore();
+  const r = ratings[vendorId];
+  if (!r?.count) return null;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+      <Icon name="star" size={small ? 11 : 13} color="#F5A524" fill="#F5A524" />
+      <Text style={{ fontSize: small ? 11 : 12, color: C.text, fontWeight: '700' }}>{r.avg.toFixed(1)}</Text>
+      <Text style={{ fontSize: small ? 10 : 11, color: C.muted }}>({r.count})</Text>
+    </View>
+  );
+}
+
 export function VendorLine({ vendor, small }: { vendor?: Vendor; small?: boolean }) {
   const { tl } = useI18n();
   if (!vendor) return null;
@@ -381,6 +410,7 @@ export function VendorLine({ vendor, small }: { vendor?: Vendor; small?: boolean
           {vendor.name}{vendor.city ? ` · ${cityName(vendor.city, tl)}` : ''}
         </Text>
         {vendor.verified && <Icon name="verified" size={small ? 12 : 14} color={C.success} />}
+        <RatingBadge vendorId={vendor.id} small={small} />
       </Pressable>
     </Link>
   );

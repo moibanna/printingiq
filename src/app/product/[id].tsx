@@ -4,7 +4,7 @@ import { Image, Linking, Pressable, ScrollView, useWindowDimensions, View } from
 import { ContactSheet } from '../../components/contact';
 import { Icon } from '../../components/icons';
 import { Text, TextInput } from '../../components/text';
-import { AvailabilityBadge, Button, Chip, cityName, FavButton, H, Muted, ProductThumb, s, Screen, Swatches } from '../../components/ui';
+import { AvailabilityBadge, Button, Chip, cityName, FavButton, H, Muted, ProductThumb, RatingBadge, s, Screen, Swatches } from '../../components/ui';
 import { categoryById, groupById, Product, Vendor } from '../../lib/catalog';
 import { formatConverted, formatPrice, formatRate, hostOf, intlPhone, shortDate, unitKey } from '../../lib/format';
 import { useI18n } from '../../lib/i18n';
@@ -52,6 +52,7 @@ export default function ProductScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Icon name="pin" size={13} color={C.muted} />
             <Muted style={{ fontSize: 12 }}>{cityName(v.city, tl)}</Muted>
+            <RatingBadge vendorId={v.id} />
           </View>
         </View>
         <Button small variant="ghost" title={t('viewShop')} onPress={() => router.push(`/vendor/${v.id}`)} />

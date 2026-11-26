@@ -35,7 +35,7 @@ export const ICONS = {
 
 export type IconName = keyof typeof ICONS;
 
-export function Icon({ name, size = 20, color = C.text, strokeWidth = 1.8 }: { name: string; size?: number; color?: string; strokeWidth?: number }) {
+export function Icon({ name, size = 20, color = C.text, strokeWidth = 1.8, fill }: { name: string; size?: number; color?: string; strokeWidth?: number; fill?: string }) {
   const Cmp = (ICONS as Record<string, LucideIcon>)[name] ?? Package;
-  return <Cmp size={size} color={color} strokeWidth={strokeWidth} />;
+  return <Cmp size={size} color={color} strokeWidth={strokeWidth} fill={fill ?? 'none'} />;
 }

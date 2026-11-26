@@ -3,13 +3,15 @@ import Constants from 'expo-constants';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { backend, LeadInput, OfferInput, RequestInput, VendorInput } from './backend';
-import { DEFAULT_EXCHANGE, Exchange, Lead, Offer, Product, QuoteRequest, Vendor } from './catalog';
+import { DEFAULT_EXCHANGE, Exchange, Lead, Offer, Product, QuoteRequest, Vendor, VendorRating } from './catalog';
 import { loadImportedCatalog } from './importedCatalog';
 
 export type QuoteItem = { productId: string; qty: number };
 export type Customer = { name: string; phone: string };
 /** A quote request this device sent: the private link parts plus a summary for the "My requests" list */
 export type MyRequest = { id: string; token: string; description: string; createdAt: string };
+/** A vendor this device contacted through PrintingIQ, so the customer can rate them later */
+export type MyContact = { leadId: string; vendorId: string; phone: string; createdAt: string; rated?: number };
 
 type Store = {
   mode: 'local' | 'supabase';
@@ -55,18 +57,23 @@ type Store = {
   newRequests: number;
   seenRequests: () => void;
   sendOffer: (o: OfferInput) => Promise<Offer>;
+  // Ratings
+  ratings: Record<string, VendorRating>;
+  myContacts: MyContact[];
+  rate: (c: MyContact, stars: number, comment?: string) => Promise<void>;
 };
 
 const Ctx = createContext<Store | null>(null);
 
 type Loaded = {
   products: Product[]; vendors: Vendor[]; me: Vendor | null; email: string | null; leads: Lead[]; exchange?: Exchange;
-  requests: QuoteRequest[]; myOffers: Offer[];
+  requests: QuoteRequest[]; myOffers: Offer[]; ratings: Record<string, VendorRating>;
 };
 async function loadAll(): Promise<Loaded | null> {
   try {
-    const [own, ownVendors, imported, me, email] = await Promise.all([
+    const [own, ownVendors, imported, me, email, ratings] = await Promise.all([
       backend.listProducts(), backend.listVendors(), loadImportedCatalog(), backend.getMyVendor(), backend.currentUserEmail(),
+      backend.listRatings().catch(() => ({})),
     ]);
     // Vendors' own listings first, then the catalog copied daily from vendors' websites and pages.
     // A vendor who has an account here wins over the copied profile with the same id.
@@ -76,7 +83,7 @@ async function loadAll(): Promise<Loaded | null> {
     const [leads, requests, myOffers] = me
       ? await Promise.all([backend.listMyLeads(), backend.listOpenRequests(), backend.listMyOffers()])
       : [[], [], []];
-    return { products, vendors, me, email, leads, exchange: imported.exchange, requests, myOffers };
+    return { products, vendors, me, email, leads, exchange: imported.exchange, requests, myOffers, ratings };
   } catch (err) {
     console.warn('Failed to load data', err);
     return null;
@@ -138,6 +145,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [myRequests, setMyRequests] = usePersisted<MyRequest[]>('printingiq.myRequests', []);
   const [requests, setRequests] = useState<QuoteRequest[]>([]);
   const [myOffers, setMyOffers] = useState<Offer[]>([]);
+  const [ratings, setRatings] = useState<Record<string, VendorRating>>({});
+  const [myContacts, setMyContacts] = usePersisted<MyContact[]>('printingiq.myContacts', []);
   // Requests the vendor hasn't looked at yet (newer than the last visit to the Requests tab)
   const [requestsSeenAt, setRequestsSeenAt] = usePersisted<string>('printingiq.requestsSeenAt', '');
   const alertTitle = useRef('PrintingIQ');
@@ -145,7 +154,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const apply = useCallback((d: Loaded | null) => {
     if (d) {
       setProducts(d.products); setVendorList(d.vendors); setMe(d.me); setEmail(d.email); setLeads(d.leads);
-      setRequests(d.requests); setMyOffers(d.myOffers);
+      setRequests(d.requests); setMyOffers(d.myOffers); setRatings(d.ratings);
       if (d.exchange?.iqdPerUsd) setExchange(d.exchange);
     }
     setLoading(false);
@@ -208,7 +217,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     async sendLead(l) {
       setCustomerBox(() => ({ name: l.customerName, phone: l.customerPhone }));
       try {
-        await backend.createLead(l);
+        const lead = await backend.createLead(l);
+        // Remember the contact (one per vendor, newest) so the customer can rate the vendor later
+        setMyContacts((xs) => [
+          { leadId: lead.id, vendorId: l.vendorId, phone: l.customerPhone, createdAt: lead.createdAt },
+          ...xs.filter((x) => x.vendorId !== l.vendorId || x.rated),
+        ].slice(0, 30));
       } catch (e) {
         console.warn('Could not record inquiry', e); // never stop the customer from reaching the vendor
       }
@@ -234,13 +248,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     myOffers,
     newRequests: requests.filter((r) => r.createdAt > requestsSeenAt && !myOffers.some((o) => o.requestId === r.id)).length,
     seenRequests: () => setRequestsSeenAt(() => new Date().toISOString()),
+    ratings,
+    myContacts,
+    async rate(c, stars, comment) {
+      await backend.addReview({ leadId: c.leadId, customerPhone: c.phone, stars, comment });
+      setMyContacts((xs) => xs.map((x) => (x.leadId === c.leadId ? { ...x, rated: stars } : x)));
+      setRatings(await backend.listRatings().catch(() => ratings));
+    },
     async sendOffer(o) {
       const saved = await backend.sendOffer(o);
       setMyOffers((xs) => [saved, ...xs.filter((x) => x.requestId !== saved.requestId)]);
       return saved;
     },
   }), [loading, products, exchange, vendorList, me, email, refresh, leads, alert, customerBox, favorites, quote, setFavorites, setQuote,
-    setCustomerBox, myRequests, setMyRequests, requests, myOffers, requestsSeenAt, setRequestsSeenAt]);
+    setCustomerBox, myRequests, setMyRequests, requests, myOffers, requestsSeenAt, setRequestsSeenAt, ratings, myContacts, setMyContacts]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 import { ProductBrowser } from '../../components/browser';
 import { ContactSheet } from '../../components/contact';
+import { VendorReviews } from '../../components/ratings';
 import { Icon } from '../../components/icons';
 import { Text } from '../../components/text';
-import { Button, cityName, Muted, s, Screen } from '../../components/ui';
+import { Button, cityName, Muted, RatingBadge, s, Screen } from '../../components/ui';
 import { hostOf, intlPhone, shortDate } from '../../lib/format';
 import { useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
@@ -31,6 +32,7 @@ export default function VendorScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={{ fontSize: 20, fontWeight: '700', color: C.text }}>{v.name}</Text>
             {v.verified && <Icon name="verified" size={18} color={C.success} />}
+            <RatingBadge vendorId={v.id} />
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -62,6 +64,7 @@ export default function VendorScreen() {
         {me?.id !== v.id && !!v.phone && <Button variant="whatsapp" icon="whatsapp" title={t('contactVendor')} onPress={() => setContact(true)} />}
       </View>
 
+      <VendorReviews vendorId={v.id} />
       <ProductBrowser key={v.id} products={list} />
       {contact && <ContactSheet vendor={v} visible={contact} onClose={() => setContact(false)} items={[{ productId: '', name: `${v.name} — PrintingIQ` }]} />}
     </Screen>

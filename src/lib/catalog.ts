@@ -266,3 +266,7 @@ export type ShopLink = {
   syncedAt?: string;
   createdAt: string;
 };
+
+/** A customer's rating of a vendor they contacted through PrintingIQ (one per inquiry). */
+export type Review = { id: string; vendorId: string; stars: number; comment?: string; customerName: string; createdAt: string };
+export type VendorRating = { avg: number; count: number };

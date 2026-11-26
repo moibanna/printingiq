@@ -249,3 +249,37 @@ create policy "vendor adds links" on public.shop_links for insert
   with check (auth.uid() = vendor_id and status = 'pending' and last_result is null and synced_at is null);
 drop policy if exists "vendor removes own links" on public.shop_links;
 create policy "vendor removes own links" on public.shop_links for delete using (auth.uid() = vendor_id);
+
+-- ═════════════ Ratings: a customer who contacted a vendor through PrintingIQ rates them (one rating per inquiry) ═════════════
+-- add_review() checks the inquiry exists and was sent from the same phone number, so ratings can't be made up.
+create table if not exists public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  vendor_id uuid not null references public.vendors(id) on delete cascade,
+  lead_id uuid not null unique references public.leads(id) on delete cascade,
+  stars integer not null check (stars between 1 and 5),
+  comment text check (length(comment) <= 1000),
+  customer_name text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists reviews_vendor_idx on public.reviews (vendor_id, created_at desc);
+alter table public.reviews enable row level security;
+drop policy if exists "reviews readable" on public.reviews;
+create policy "reviews readable" on public.reviews for select using (true);
+
+create or replace view public.vendor_ratings as
+  select vendor_id, round(avg(stars)::numeric, 2) as avg, count(*)::int as count from public.reviews group by vendor_id;
+grant select on public.vendor_ratings to anon, authenticated;
+
+create or replace function public.add_review(p_lead_id uuid, p_phone text, p_stars int, p_comment text)
+returns void language plpgsql security definer set search_path = public as $$
+declare l leads%rowtype;
+begin
+  select * into l from leads where id = p_lead_id
+    and regexp_replace(customer_phone, '\D', '', 'g') = regexp_replace(p_phone, '\D', '', 'g')
+    and created_at > now() - interval '120 days';
+  if not found then raise exception 'inquiry not found'; end if;
+  insert into reviews (vendor_id, lead_id, stars, comment, customer_name)
+    values (l.vendor_id, l.id, p_stars, nullif(trim(p_comment), ''), l.customer_name)
+    on conflict (lead_id) do nothing;
+end $$;
+grant execute on function public.add_review(uuid, text, int, text) to anon, authenticated;
