@@ -19,6 +19,7 @@ export default function Home() {
       {!wide && <RateBadge />}
       <HeroSlider />
       <QuickActions items={[
+        { icon: 'send', title: t('getOffers'), sub: t('getOffersSub'), href: '/request' },
         { icon: 'scale', title: t('comparePrices'), sub: t('comparePricesSub'), href: '/prices' },
       ]} />
 

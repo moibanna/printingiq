@@ -2,12 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import { backend, LeadInput, VendorInput } from './backend';
-import { DEFAULT_EXCHANGE, Exchange, Lead, Product, Vendor } from './catalog';
+import { backend, LeadInput, OfferInput, RequestInput, VendorInput } from './backend';
+import { DEFAULT_EXCHANGE, Exchange, Lead, Offer, Product, QuoteRequest, Vendor } from './catalog';
 import { loadImportedCatalog } from './importedCatalog';
 
 export type QuoteItem = { productId: string; qty: number };
 export type Customer = { name: string; phone: string };
+/** A quote request this device sent: the private link parts plus a summary for the "My requests" list */
+export type MyRequest = { id: string; token: string; description: string; createdAt: string };
 
 type Store = {
   mode: 'local' | 'supabase';
@@ -44,11 +46,23 @@ type Store = {
   setQuoteQty: (productId: string, qty: number) => void;
   addToQuote: (productId: string, qty?: number) => void;
   clearQuote: (productIds?: string[]) => void;
+  // Quote requests
+  myRequests: MyRequest[];
+  createRequest: (r: RequestInput) => Promise<MyRequest>;
+  /** Vendor side: open requests from customers and the offers this vendor sent */
+  requests: QuoteRequest[];
+  myOffers: Offer[];
+  newRequests: number;
+  seenRequests: () => void;
+  sendOffer: (o: OfferInput) => Promise<Offer>;
 };
 
 const Ctx = createContext<Store | null>(null);
 
-type Loaded = { products: Product[]; vendors: Vendor[]; me: Vendor | null; email: string | null; leads: Lead[]; exchange?: Exchange };
+type Loaded = {
+  products: Product[]; vendors: Vendor[]; me: Vendor | null; email: string | null; leads: Lead[]; exchange?: Exchange;
+  requests: QuoteRequest[]; myOffers: Offer[];
+};
 async function loadAll(): Promise<Loaded | null> {
   try {
     const [own, ownVendors, imported, me, email] = await Promise.all([
@@ -59,7 +73,10 @@ async function loadAll(): Promise<Loaded | null> {
     const ids = new Set(ownVendors.map((v) => v.id));
     const vendors = [...ownVendors, ...imported.vendors.filter((v) => !ids.has(v.id))];
     const products = [...own, ...imported.products];
-    return { products, vendors, me, email, leads: me ? await backend.listMyLeads() : [], exchange: imported.exchange };
+    const [leads, requests, myOffers] = me
+      ? await Promise.all([backend.listMyLeads(), backend.listOpenRequests(), backend.listMyOffers()])
+      : [[], [], []];
+    return { products, vendors, me, email, leads, exchange: imported.exchange, requests, myOffers };
   } catch (err) {
     console.warn('Failed to load data', err);
     return null;
@@ -118,11 +135,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = usePersisted<string[]>('printingiq.favorites', []);
   const [quote, setQuote] = usePersisted<QuoteItem[]>('printingiq.quote', []);
   const [customerBox, setCustomerBox] = usePersisted<Customer | null>('printingiq.customer', null);
+  const [myRequests, setMyRequests] = usePersisted<MyRequest[]>('printingiq.myRequests', []);
+  const [requests, setRequests] = useState<QuoteRequest[]>([]);
+  const [myOffers, setMyOffers] = useState<Offer[]>([]);
+  // Requests the vendor hasn't looked at yet (newer than the last visit to the Requests tab)
+  const [requestsSeenAt, setRequestsSeenAt] = usePersisted<string>('printingiq.requestsSeenAt', '');
   const alertTitle = useRef('PrintingIQ');
 
   const apply = useCallback((d: Loaded | null) => {
     if (d) {
       setProducts(d.products); setVendorList(d.vendors); setMe(d.me); setEmail(d.email); setLeads(d.leads);
+      setRequests(d.requests); setMyOffers(d.myOffers);
       if (d.exchange?.iqdPerUsd) setExchange(d.exchange);
     }
     setLoading(false);
@@ -139,11 +162,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!me) return;
     registerForPush();
-    return backend.subscribeLeads(me.id, (l) => {
+    const offLeads = backend.subscribeLeads(me.id, (l) => {
       setLeads((xs) => (xs.some((x) => x.id === l.id) ? xs : [l, ...xs]));
       setAlert(l);
       browserNotify(l, alertTitle.current);
     });
+    const offRequests = backend.subscribeRequests((r) => setRequests((xs) => (xs.some((x) => x.id === r.id) ? xs : [r, ...xs])));
+    return () => { offLeads(); offRequests(); };
   }, [me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo<Store>(() => ({
@@ -197,7 +222,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     setQuoteQty: (id, qty) => setQuote((q) => (qty <= 0 ? q.filter((x) => x.productId !== id) : q.map((x) => (x.productId === id ? { ...x, qty } : x)))),
     clearQuote: (ids) => setQuote((q) => (ids ? q.filter((x) => !ids.includes(x.productId)) : [])),
-  }), [loading, products, exchange, vendorList, me, email, refresh, leads, alert, customerBox, favorites, quote, setFavorites, setQuote, setCustomerBox]);
+    myRequests,
+    async createRequest(r) {
+      setCustomerBox(() => ({ name: r.customerName, phone: r.customerPhone }));
+      const { id, token } = await backend.createRequest(r);
+      const mine: MyRequest = { id, token, description: r.description.slice(0, 140), createdAt: new Date().toISOString() };
+      setMyRequests((xs) => [mine, ...xs].slice(0, 50));
+      return mine;
+    },
+    requests,
+    myOffers,
+    newRequests: requests.filter((r) => r.createdAt > requestsSeenAt && !myOffers.some((o) => o.requestId === r.id)).length,
+    seenRequests: () => setRequestsSeenAt(() => new Date().toISOString()),
+    async sendOffer(o) {
+      const saved = await backend.sendOffer(o);
+      setMyOffers((xs) => [saved, ...xs.filter((x) => x.requestId !== saved.requestId)]);
+      return saved;
+    },
+  }), [loading, products, exchange, vendorList, me, email, refresh, leads, alert, customerBox, favorites, quote, setFavorites, setQuote,
+    setCustomerBox, myRequests, setMyRequests, requests, myOffers, requestsSeenAt, setRequestsSeenAt]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

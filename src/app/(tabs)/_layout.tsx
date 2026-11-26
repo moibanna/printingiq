@@ -15,7 +15,7 @@ const icon = (name: IconName) => {
 
 export default function TabsLayout() {
   const { t } = useI18n();
-  const { quote, unread, me } = useStore();
+  const { quote, unread, me, newRequests } = useStore();
   const wide = useWide();
   const badge = { backgroundColor: C.accent, fontFamily: 'NotoKufiArabic_700Bold', fontSize: 10 };
   return (
@@ -39,7 +39,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="sell" options={{ title: t('sell'), headerTitle: t('addProduct'), tabBarIcon: icon('plus') }} />
       <Tabs.Screen
         name="account"
-        options={{ title: me ? t('myShop') : t('account'), headerTitle: me ? t('dashboard') : t('vendorAccount'), tabBarIcon: icon(me ? 'store' : 'user'), tabBarBadge: unread || undefined, tabBarBadgeStyle: badge }}
+        options={{ title: me ? t('myShop') : t('account'), headerTitle: me ? t('dashboard') : t('vendorAccount'), tabBarIcon: icon(me ? 'store' : 'user'), tabBarBadge: unread + newRequests || undefined, tabBarBadgeStyle: badge }}
       />
     </Tabs>
   );

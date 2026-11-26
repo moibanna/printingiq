@@ -171,8 +171,8 @@ export function Logo({ light }: { light?: boolean }) {
 /** Website header for desktop: contact/language bar, then logo, nav, search, favorites, quote list and account. */
 export function WebHeader() {
   const { t } = useI18n();
-  const { favorites, quote, unread, me } = useStore();
-  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['comparePrices', '/prices'], ['sell', '/sell']];
+  const { favorites, quote, unread, me, newRequests } = useStore();
+  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['getOffers', '/request'], ['comparePrices', '/prices'], ['sell', '/sell']];
   return (
     <View style={{ backgroundColor: '#fff', borderBottomWidth: 1, borderColor: C.border }}>
       <View style={{ backgroundColor: C.accentSoft }}>
@@ -202,7 +202,7 @@ export function WebHeader() {
           <Pressable style={flat(s.navLink, { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primarySoft })}>
             <Icon name={me ? 'store' : 'user'} size={18} color={C.primary} />
             <Text style={{ color: C.primary, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>{me ? me.name : t('vendorAccount')}</Text>
-            {unread > 0 && <View style={[s.badge, { position: 'relative', top: 0, end: 0 }]}><Text style={s.badgeText}>{unread}</Text></View>}
+            {unread + newRequests > 0 && <View style={[s.badge, { position: 'relative', top: 0, end: 0 }]}><Text style={s.badgeText}>{unread + newRequests}</Text></View>}
           </Pressable>
         </Link>
       </View>

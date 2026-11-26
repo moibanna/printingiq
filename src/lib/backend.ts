@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
-import { Lead, Product, Vendor } from './catalog';
+import { Attachment, Lead, Offer, Product, QuoteRequest, Vendor } from './catalog';
 
 /**
  * Two backends behind one interface:
@@ -11,6 +11,8 @@ import { Lead, Product, Vendor } from './catalog';
  */
 export type VendorInput = Omit<Vendor, 'id' | 'verified'>;
 export type LeadInput = Omit<Lead, 'id' | 'createdAt' | 'read'>;
+export type RequestInput = Omit<QuoteRequest, 'id' | 'token' | 'status' | 'createdAt' | 'files'> & { files: Attachment[] };
+export type OfferInput = Omit<Offer, 'id' | 'createdAt' | 'vendorId'>;
 
 export interface Backend {
   mode: 'local' | 'supabase';
@@ -34,6 +36,17 @@ export interface Backend {
   /** Calls back when a new inquiry for this vendor arrives. Returns an unsubscribe function. */
   subscribeLeads(vendorId: string, onLead: (l: Lead) => void): () => void;
   registerPushToken(token: string): Promise<void>;
+  // Quote requests: customers describe a job, vendors send offers
+  /** Saves the request (uploading attached files) and notifies vendors. Returns its private link parts. */
+  createRequest(r: RequestInput): Promise<{ id: string; token: string }>;
+  /** Customer view: the request and every offer, if the token matches. */
+  getRequest(id: string, token: string): Promise<{ request: QuoteRequest; offers: Offer[] } | null>;
+  closeRequest(id: string, token: string): Promise<void>;
+  /** Vendor view: recent open requests (with the customer's contact) */
+  listOpenRequests(): Promise<QuoteRequest[]>;
+  listMyOffers(): Promise<Offer[]>;
+  sendOffer(o: OfferInput): Promise<Offer>;
+  subscribeRequests(onRequest: (r: QuoteRequest) => void): () => void;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -41,7 +54,7 @@ const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(
 // ---------- Local (demo) backend ----------
 const K = {
   products: 'printingiq.products', vendors: 'printingiq.vendors', accounts: 'printingiq.accounts',
-  session: 'printingiq.session', leads: 'printingiq.leads',
+  session: 'printingiq.session', leads: 'printingiq.leads', requests: 'printingiq.requests', offers: 'printingiq.offers',
 };
 type LocalAccount = { email: string; password: string; vendorId: string };
 
@@ -57,6 +70,9 @@ const writeJSON = (key: string, v: unknown) => AsyncStorage.setItem(key, JSON.st
 
 // In demo mode, inquiries made on this device reach the vendor signed in on this device instantly.
 const localListeners = new Set<(l: Lead) => void>();
+const requestListeners = new Set<(r: QuoteRequest) => void>();
+const REQUEST_DAYS = 30; // vendors see requests from the last 30 days
+const recent = (iso: string) => Date.now() - new Date(iso).getTime() < REQUEST_DAYS * 864e5;
 
 const localBackend: Backend = {
   mode: 'local',
@@ -141,6 +157,43 @@ const localBackend: Backend = {
     };
   },
   registerPushToken: async () => {},
+  async createRequest(r) {
+    const req: QuoteRequest = { ...r, id: uid(), token: uid() + uid(), status: 'open', createdAt: new Date().toISOString() };
+    await writeJSON(K.requests, [req, ...(await readJSON<QuoteRequest[]>(K.requests, []))]);
+    requestListeners.forEach((fn) => fn(req));
+    return { id: req.id, token: req.token! };
+  },
+  async getRequest(id, token) {
+    const req = (await readJSON<QuoteRequest[]>(K.requests, [])).find((x) => x.id === id && x.token === token);
+    if (!req) return null;
+    return { request: req, offers: (await readJSON<Offer[]>(K.offers, [])).filter((o) => o.requestId === id) };
+  },
+  async closeRequest(id, token) {
+    await writeJSON(K.requests, (await readJSON<QuoteRequest[]>(K.requests, [])).map((x) =>
+      (x.id === id && x.token === token ? { ...x, status: 'closed' as const } : x)));
+  },
+  async listOpenRequests() {
+    if (!(await this.getMyVendor())) return [];
+    return (await readJSON<QuoteRequest[]>(K.requests, []))
+      .filter((x) => x.status === 'open' && recent(x.createdAt)).map(({ token: _t, ...x }) => x);
+  },
+  async listMyOffers() {
+    const me = await this.getMyVendor();
+    return me ? (await readJSON<Offer[]>(K.offers, [])).filter((o) => o.vendorId === me.id) : [];
+  },
+  async sendOffer(o) {
+    const me = await this.getMyVendor();
+    if (!me) throw new Error('Sign in first');
+    const offers = await readJSON<Offer[]>(K.offers, []);
+    const old = offers.find((x) => x.requestId === o.requestId && x.vendorId === me.id);
+    const saved: Offer = { ...o, id: old?.id ?? uid(), vendorId: me.id, createdAt: new Date().toISOString() };
+    await writeJSON(K.offers, [saved, ...offers.filter((x) => x.id !== saved.id)]);
+    return saved;
+  },
+  subscribeRequests(onRequest) {
+    requestListeners.add(onRequest);
+    return () => { requestListeners.delete(onRequest); };
+  },
 };
 
 // ---------- Supabase backend ----------
@@ -168,6 +221,31 @@ const fromLeadRow = (r: LeadRow): Lead => ({
 });
 
 const VENDOR_COLS = 'id,name,city,phone,whatsapp,email,about,verified';
+
+type RequestRow = {
+  id: string; group_id: string; category_id: string | null; description: string; quantity: string | null; city: string;
+  files: Attachment[] | null; customer_name: string; customer_phone: string; status: QuoteRequest['status']; created_at: string;
+};
+const fromRequestRow = (r: RequestRow): QuoteRequest => ({
+  id: r.id, groupId: r.group_id, categoryId: r.category_id ?? undefined, description: r.description, quantity: r.quantity ?? undefined,
+  city: r.city, files: r.files ?? [], customerName: r.customer_name, customerPhone: r.customer_phone, status: r.status, createdAt: r.created_at,
+});
+type OfferRow = { id: string; request_id: string; vendor_id: string; price: number | null; currency: Offer['currency']; note: string | null; days: number | null; created_at: string };
+const fromOfferRow = (r: OfferRow): Offer => ({
+  id: r.id, requestId: r.request_id, vendorId: r.vendor_id, price: r.price, currency: r.currency, note: r.note ?? undefined,
+  days: r.days ?? undefined, createdAt: r.created_at,
+});
+
+/** Customers' designs for quote requests (no account needed; see the request-files bucket in schema.sql). */
+async function uploadRequestFile(sb: SupabaseClient, f: Attachment): Promise<Attachment> {
+  if (/^https?:\/\//.test(f.url)) return f;
+  const blob = await (await fetch(f.url)).blob();
+  const safe = f.name.normalize('NFKD').replace(/[^\w.-]+/g, '_').slice(-60) || 'file';
+  const path = `requests/${uid()}-${safe}`;
+  const { error } = await sb.storage.from('request-files').upload(path, blob, { contentType: f.type || blob.type || undefined });
+  if (error) throw error;
+  return { ...f, url: sb.storage.from('request-files').getPublicUrl(path).data.publicUrl };
+}
 
 async function uploadImage(sb: SupabaseClient, userId: string, uri: string): Promise<string> {
   if (/^https?:\/\//.test(uri)) return uri;
@@ -285,6 +363,49 @@ function supabaseBackend(url: string, key: string): Backend {
       const id = await userId();
       if (!id) return;
       await sb.from('push_tokens').upsert({ token, vendor_id: id, platform: Platform.OS });
+    },
+    async createRequest(r) {
+      const files = await Promise.all(r.files.map((f) => uploadRequestFile(sb, f)));
+      // A database function saves the request and its private token together (customers have no account).
+      const data = must(await sb.rpc('create_quote_request', {
+        p_group_id: r.groupId, p_category_id: r.categoryId ?? null, p_description: r.description, p_quantity: r.quantity ?? null,
+        p_city: r.city, p_files: files, p_customer_name: r.customerName, p_customer_phone: r.customerPhone,
+      })) as { id: string; token: string };
+      sb.functions.invoke('notify-vendor', { body: { request_id: data.id } }).catch(() => {});
+      return data;
+    },
+    async getRequest(id, token) {
+      const data = must(await sb.rpc('get_quote_request', { p_id: id, p_token: token })) as { request: RequestRow; offers: OfferRow[] } | null;
+      return data?.request ? { request: { ...fromRequestRow(data.request), token }, offers: (data.offers ?? []).map(fromOfferRow) } : null;
+    },
+    async closeRequest(id, token) {
+      must(await sb.rpc('close_quote_request', { p_id: id, p_token: token }));
+    },
+    async listOpenRequests() {
+      if (!(await userId())) return [];
+      const since = new Date(Date.now() - 30 * 864e5).toISOString();
+      return (must(await sb.from('quote_requests').select('*').eq('status', 'open').gte('created_at', since)
+        .order('created_at', { ascending: false }).limit(200)) as RequestRow[]).map(fromRequestRow);
+    },
+    async listMyOffers() {
+      const id = await userId();
+      if (!id) return [];
+      return (must(await sb.from('quote_offers').select('*').eq('vendor_id', id).limit(500)) as OfferRow[]).map(fromOfferRow);
+    },
+    async sendOffer(o) {
+      const id = await userId();
+      if (!id) throw new Error('Sign in first');
+      return fromOfferRow(must(await sb.from('quote_offers').upsert({
+        request_id: o.requestId, vendor_id: id, price: o.price, currency: o.currency, note: o.note ?? null, days: o.days ?? null,
+      }, { onConflict: 'request_id,vendor_id' }).select('*').single()) as OfferRow);
+    },
+    subscribeRequests(onRequest) {
+      const ch = sb
+        .channel('quote-requests')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'quote_requests' },
+          (payload) => onRequest(fromRequestRow(payload.new as RequestRow)))
+        .subscribe();
+      return () => { sb.removeChannel(ch); };
     },
   };
 }

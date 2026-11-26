@@ -224,3 +224,33 @@ export function emptyProduct(vendorId: string): Product {
     availability: 'in_stock', images: [], createdAt: new Date().toISOString(),
   };
 }
+
+/** A customer describing a job ("500 business cards, two sides") so vendors can send offers. No account needed:
+ *  the customer keeps a private link (id + token) to see the offers. */
+export type Attachment = { url: string; name: string; type?: string };
+export type QuoteRequest = {
+  id: string;
+  /** Secret that lets the customer (and only them) read the offers */
+  token?: string;
+  groupId: string;
+  categoryId?: string;
+  description: string;
+  quantity?: string;
+  city: string;
+  files: Attachment[];
+  customerName: string;
+  customerPhone: string;
+  status: 'open' | 'closed';
+  createdAt: string;
+};
+export type Offer = {
+  id: string;
+  requestId: string;
+  vendorId: string;
+  price: number | null;
+  currency: Currency;
+  note?: string;
+  /** Days until ready, if the vendor says */
+  days?: number;
+  createdAt: string;
+};

@@ -1,9 +1,10 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, Pressable, View } from 'react-native';
 import { Icon, IconName } from '../../components/icons';
 import { Text } from '../../components/text';
 import { Button, Chip, Field, H, LangSwitcher, Muted, ProductThumb, s, Screen } from '../../components/ui';
+import { RequestsInbox } from '../../components/requests';
 import { BulkPriceChange, PriceListEditor } from '../../components/vendorTools';
 import { CITIES, Lead } from '../../lib/catalog';
 import { formatPrice, intlPhone } from '../../lib/format';
@@ -130,13 +131,19 @@ function LeadCard({ lead }: { lead: Lead }) {
   );
 }
 
-type Tab = 'inquiries' | 'prices' | 'products' | 'shop';
+type Tab = 'inquiries' | 'requests' | 'prices' | 'products' | 'shop';
+const TABS: Tab[] = ['inquiries', 'requests', 'prices', 'products', 'shop'];
 
 function Dashboard() {
   const { t, tl, lang } = useI18n();
   const store = useStore();
-  const { me, leads, unread, products, email } = store;
-  const [tab, setTab] = useState<Tab>('inquiries');
+  const { me, leads, unread, products, email, newRequests, seenRequests } = store;
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTabState] = useState<Tab>(TABS.includes(params.tab as Tab) ? (params.tab as Tab) : 'inquiries');
+  const setTab = (k: Tab) => {
+    if (k === 'requests') seenRequests(); // opening Requests marks the current ones as seen
+    setTabState(k);
+  };
   const [shop, setShop] = useState<ShopForm>(() =>
     me ? { name: me.name, phone: me.phone, whatsapp: me.whatsapp ?? '', city: me.city, about: me.about ?? '' } : emptyShop);
   const [saved, setSaved] = useState('');
@@ -145,7 +152,7 @@ function Dashboard() {
   const mine = products.filter((p) => p.vendorId === me.id);
 
   const tabs: [Tab, StringKey, IconName, number?][] = [
-    ['inquiries', 'inquiries', 'inbox', unread], ['prices', 'priceList', 'receipt'], ['products', 'myProducts', 'grid', mine.length],
+    ['inquiries', 'inquiries', 'inbox', unread], ['requests', 'requests', 'send', newRequests], ['prices', 'priceList', 'receipt'], ['products', 'myProducts', 'grid', mine.length],
     ['shop', 'myShop', 'store'],
   ];
 
@@ -179,8 +186,8 @@ function Dashboard() {
             <Icon name={icon} size={16} color={tab === k ? '#fff' : C.primary} />
             <Text style={[s.chipText, tab === k && { color: '#fff' }]}>{t(label)}</Text>
             {n ? (
-              <View style={{ backgroundColor: k === 'inquiries' ? C.accent : C.primarySoft, borderRadius: 9, minWidth: 18, paddingHorizontal: 5, alignItems: 'center' }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: k === 'inquiries' ? '#fff' : C.primary }}>{n}</Text>
+              <View style={{ backgroundColor: k === 'inquiries' || k === 'requests' ? C.accent : C.primarySoft, borderRadius: 9, minWidth: 18, paddingHorizontal: 5, alignItems: 'center' }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: k === 'inquiries' || k === 'requests' ? '#fff' : C.primary }}>{n}</Text>
               </View>
             ) : null}
           </Pressable>
@@ -194,6 +201,7 @@ function Dashboard() {
         </View>
       ))}
 
+      {tab === 'requests' && <RequestsInbox />}
       {tab === 'prices' && <PriceListEditor vendorId={me.id} />}
 
       {tab === 'products' && mine.length > 0 && <BulkPriceChange products={mine} />}

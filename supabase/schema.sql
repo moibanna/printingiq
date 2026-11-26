@@ -118,3 +118,102 @@ create policy "vendors upload own images" on storage.objects for insert
 drop policy if exists "vendors delete own images" on storage.objects;
 create policy "vendors delete own images" on storage.objects for delete
   using (bucket_id = 'product-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ═════════════ Quote requests: a customer describes a job, vendors send offers ═════════════
+-- Customers have no account: create_quote_request() returns a private token, and only someone with that token
+-- can read the offers (get_quote_request) or close the request. The token lives in its own table that nobody
+-- can read directly, so vendors (and live updates) never see it.
+create table if not exists public.quote_requests (
+  id uuid primary key default gen_random_uuid(),
+  group_id text not null,
+  category_id text,
+  description text not null check (length(description) between 3 and 3000),
+  quantity text check (length(quantity) <= 200),
+  city text not null,
+  files jsonb not null default '[]'::jsonb,       -- [{ "url", "name", "type" }]
+  customer_name text not null check (length(customer_name) between 1 and 120),
+  customer_phone text not null check (length(customer_phone) between 5 and 30),
+  status text not null default 'open' check (status in ('open','closed')),
+  created_at timestamptz not null default now()
+);
+create index if not exists quote_requests_open_idx on public.quote_requests (status, created_at desc);
+
+create table if not exists public.quote_request_secrets (
+  request_id uuid primary key references public.quote_requests(id) on delete cascade,
+  token uuid not null default gen_random_uuid()
+);
+
+create table if not exists public.quote_offers (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null references public.quote_requests(id) on delete cascade,
+  vendor_id uuid not null references public.vendors(id) on delete cascade,
+  price numeric,
+  currency text not null default 'IQD' check (currency in ('IQD','USD')),
+  note text check (length(note) <= 1000),
+  days integer,
+  created_at timestamptz not null default now(),
+  unique (request_id, vendor_id)
+);
+
+alter table public.quote_requests enable row level security;
+alter table public.quote_request_secrets enable row level security;  -- no policies: only the functions below read it
+alter table public.quote_offers enable row level security;
+
+-- Vendors (anyone with a shop) see open requests, including the customer's phone, so they can reply
+drop policy if exists "vendors read requests" on public.quote_requests;
+create policy "vendors read requests" on public.quote_requests for select
+  using (exists (select 1 from public.vendors v where v.id = auth.uid()));
+
+-- Each vendor sends, edits and reads only their own offer
+drop policy if exists "vendor manages own offers" on public.quote_offers;
+create policy "vendor manages own offers" on public.quote_offers for all
+  using (auth.uid() = vendor_id)
+  with check (auth.uid() = vendor_id and exists (select 1 from public.quote_requests r where r.id = request_id and r.status = 'open'));
+
+create or replace function public.create_quote_request(
+  p_group_id text, p_category_id text, p_description text, p_quantity text, p_city text, p_files jsonb,
+  p_customer_name text, p_customer_phone text
+) returns json language plpgsql security definer set search_path = public as $$
+declare rid uuid; tok uuid;
+begin
+  if jsonb_array_length(coalesce(p_files, '[]'::jsonb)) > 6 then raise exception 'too many files'; end if;
+  insert into quote_requests (group_id, category_id, description, quantity, city, files, customer_name, customer_phone)
+    values (p_group_id, p_category_id, p_description, p_quantity, p_city, coalesce(p_files, '[]'::jsonb), p_customer_name, p_customer_phone)
+    returning id into rid;
+  insert into quote_request_secrets (request_id) values (rid) returning token into tok;
+  return json_build_object('id', rid, 'token', tok);
+end $$;
+
+create or replace function public.get_quote_request(p_id uuid, p_token uuid)
+returns json language sql security definer set search_path = public stable as $$
+  select json_build_object(
+    'request', to_json(r),
+    'offers', coalesce((select json_agg(o order by o.created_at) from quote_offers o where o.request_id = r.id), '[]'::json))
+  from quote_requests r join quote_request_secrets s on s.request_id = r.id
+  where r.id = p_id and s.token = p_token
+$$;
+
+create or replace function public.close_quote_request(p_id uuid, p_token uuid)
+returns void language sql security definer set search_path = public as $$
+  update quote_requests r set status = 'closed'
+  from quote_request_secrets s where s.request_id = r.id and r.id = p_id and s.token = p_token
+$$;
+
+grant execute on function public.create_quote_request(text, text, text, text, text, jsonb, text, text) to anon, authenticated;
+grant execute on function public.get_quote_request(uuid, uuid) to anon, authenticated;
+grant execute on function public.close_quote_request(uuid, uuid) to anon, authenticated;
+
+-- New requests appear live in vendors' dashboards
+do $$ begin
+  alter publication supabase_realtime add table public.quote_requests;
+exception when duplicate_object then null; end $$;
+
+-- Customers' design files (images and PDFs up to 10 MB), uploaded without an account into requests/
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values ('request-files', 'request-files', true, 10485760, array['image/jpeg','image/png','image/webp','image/heic','application/pdf'])
+  on conflict (id) do nothing;
+drop policy if exists "request files public read" on storage.objects;
+create policy "request files public read" on storage.objects for select using (bucket_id = 'request-files');
+drop policy if exists "anyone uploads request files" on storage.objects;
+create policy "anyone uploads request files" on storage.objects for insert
+  with check (bucket_id = 'request-files' and (storage.foldername(name))[1] = 'requests');
