@@ -1,35 +1,6 @@
 {
- "ranAt": "2026-11-26T08:18:34Z",
+ "ranAt": "2026-11-26T18:33:15Z",
  "total": 1977,
- "exchangeRate": "market rate 1692 IQD per USD (2026-11-25, https://shafaq.com/en/Economy/Dollar-slips-in-Baghdad-Erbil-markets-7)",
- "sources": [
-  {
-   "id": "printway",
-   "ok": true,
-   "products": 540,
-   "before": 540,
-   "seconds": 6
-  },
-  {
-   "id": "365promo",
-   "ok": true,
-   "products": 318,
-   "before": 316,
-   "seconds": 4
-  },
-  {
-   "id": "penna",
-   "ok": true,
-   "products": 334,
-   "before": 334,
-   "seconds": 3
-  },
-  {
-   "id": "toolmart",
-   "ok": true,
-   "products": 785,
-   "before": 785,
-   "seconds": 34
-  }
- ]
+ "exchangeRate": "kept previous rate 1692 (ValueError: no dollar market report found on https://shafaq.com/en/Economy)",
+ "sources": []
 }
