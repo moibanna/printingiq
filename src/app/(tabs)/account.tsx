@@ -167,6 +167,7 @@ function Dashboard() {
           <Muted style={{ fontSize: 12 }}>{email}</Muted>
         </View>
         <Button small variant="ghost" icon="store" title={t('viewShop')} onPress={() => router.push(`/vendor/${me.id}`)} />
+        <Button small variant="ghost" icon="upload" title={t('addMany')} onPress={() => router.push('/upload')} />
         <Button small icon="plus" title={t('addProduct')} onPress={() => router.push('/sell')} />
       </View>
 

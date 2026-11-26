@@ -34,6 +34,7 @@ function Root() {
         <Stack.Screen name="request/index" options={{ title: t('getOffers') }} />
         <Stack.Screen name="request/[id]" options={{ title: t('offers') }} />
         <Stack.Screen name="requests" options={{ title: t('myRequests') }} />
+        <Stack.Screen name="upload" options={{ title: t('addMany') }} />
         <Stack.Screen name="prices/[id]" options={{ title: t('comparePrices') }} />
       </Stack>
       <InquiryBanner />

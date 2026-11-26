@@ -217,3 +217,12 @@ create policy "request files public read" on storage.objects for select using (b
 drop policy if exists "anyone uploads request files" on storage.objects;
 create policy "anyone uploads request files" on storage.objects for insert
   with check (bucket_id = 'request-files' and (storage.foldername(name))[1] = 'requests');
+
+-- ═════════════ AI helper usage (supabase/functions/ai-assist): calls per vendor per day, for the daily limit ═════════════
+create table if not exists public.ai_usage (
+  vendor_id uuid not null references public.vendors(id) on delete cascade,
+  day date not null,
+  count integer not null default 0,
+  primary key (vendor_id, day)
+);
+alter table public.ai_usage enable row level security;  -- no policies: only the function (service role) reads and writes it

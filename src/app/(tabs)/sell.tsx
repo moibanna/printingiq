@@ -1,10 +1,13 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Image, Platform, Pressable, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, Pressable, View } from 'react-native';
 import { Icon } from '../../components/icons';
 import { Text } from '../../components/text';
 import { Button, Chip, Field, H, Muted, s, Screen, Swatches } from '../../components/ui';
+import { aiMessage } from '../../lib/aiMessage';
+import { backend } from '../../lib/backend';
+import { AI_CATEGORIES, fileToBase64 } from '../../lib/bulkImport';
 import { AVAILABILITY, categoriesOf, categoryById, COLOR_PALETTE, ColorOption, Currency, emptyProduct, GROUPS, Product, UNITS } from '../../lib/catalog';
 import { unitKey } from '../../lib/format';
 import { Lang, LANG_LABEL, LANGS, useI18n } from '../../lib/i18n';
@@ -55,6 +58,30 @@ function ProductForm({ editing, vendorId }: { editing?: Product; vendorId: strin
   const [stockQty, setStockQty] = useState(editing?.stockQty != null ? String(editing.stockQty) : '');
   const [groupId, setGroupId] = useState((editing && categoryById(editing.categoryId)?.group) || GROUPS[0].id);
   const [busy, setBusy] = useState(false);
+  const [ai, setAi] = useState<{ busy?: boolean; text?: string; ok?: boolean }>({});
+
+  /** Photo → AI writes name, description and category in three languages; the vendor checks and adds a price. */
+  async function fillFromPhoto() {
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsMultipleSelection: true, selectionLimit: 3 });
+    if (r.canceled) return;
+    setAi({ busy: true });
+    try {
+      const files = await Promise.all(r.assets.map(async (a) => ({ mediaType: a.mimeType ?? 'image/jpeg', data: await fileToBase64(a.uri) })));
+      const [d] = await backend.aiAssist({ mode: 'photo', files, categories: AI_CATEGORIES });
+      if (!d) throw new Error('empty');
+      setP((x) => ({
+        ...x, name: d.name, description: d.description, categoryId: d.categoryId, unit: d.unit, currency: d.currency,
+        brand: d.brand || x.brand, sku: d.sku || x.sku, images: [...r.assets.map((a) => a.uri), ...x.images].slice(0, 6),
+      }));
+      if (d.sizes?.length) setSizes(d.sizes.join(', '));
+      if (d.price != null) setPrice(String(d.price));
+      const g = categoryById(d.categoryId)?.group;
+      if (g) setGroupId(g);
+      setAi({ text: t('aiFilled'), ok: true });
+    } catch (e) {
+      setAi({ text: aiMessage(e, t) });
+    }
+  }
 
   const set = <K extends keyof Product>(k: K, v: Product[K]) => setP((x) => ({ ...x, [k]: v }));
   const toggleColor = (c: ColorOption) =>
@@ -95,6 +122,21 @@ function ProductForm({ editing, vendorId }: { editing?: Product; vendorId: strin
     <Screen>
       <Stack.Screen options={{ headerTitle: editing ? t('editProduct') : t('addProduct') }} />
       <Muted>{t('sellIntro')}</Muted>
+      {!editing && (
+        <View style={[s.panel, { gap: 8, borderColor: '#D9CCF7', backgroundColor: '#FBF9FF' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <Icon name="sparkles" size={20} color="#6B3FD1" />
+            <Text style={{ flex: 1, minWidth: 180, color: C.text, fontSize: 13 }}>{t('fillWithAiSub')}</Text>
+            <Button small icon="camera" title={t('fillWithAi')} onPress={fillFromPhoto} disabled={ai.busy} />
+          </View>
+          {ai.busy && <ActivityIndicator color="#6B3FD1" />}
+          {ai.text ? <Text style={{ color: ai.ok ? C.success : C.danger, fontSize: 13 }}>{ai.text}</Text> : null}
+          <Pressable onPress={() => router.push('/upload')} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="upload" size={15} color={C.primary} />
+            <Text style={{ color: C.primary, fontWeight: '700', fontSize: 13 }}>{t('addMany')}</Text>
+          </Pressable>
+        </View>
+      )}
 
       <View style={s.panel}>
         <H style={{ fontSize: 14 }}>{t('category')}</H>

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
+import type { ProductDraft } from './bulkImport';
 import { Attachment, Lead, Offer, Product, QuoteRequest, Vendor } from './catalog';
 
 /**
@@ -13,6 +14,18 @@ export type VendorInput = Omit<Vendor, 'id' | 'verified'>;
 export type LeadInput = Omit<Lead, 'id' | 'createdAt' | 'read'>;
 export type RequestInput = Omit<QuoteRequest, 'id' | 'token' | 'status' | 'createdAt' | 'files'> & { files: Attachment[] };
 export type OfferInput = Omit<Offer, 'id' | 'createdAt' | 'vendorId'>;
+/** What the AI helper reads: product photos (one product) or a price list (PDF, photos or text). */
+export type AiInput = {
+  mode: 'photo' | 'pricelist';
+  files?: { mediaType: string; data: string }[];
+  text?: string;
+  categories: { id: string; name: string }[];
+  hint?: string;
+};
+/** Error codes from the AI helper (supabase/functions/ai-assist); the app shows a message for each. */
+export class AiError extends Error {
+  constructor(public code: string) { super(code); }
+}
 
 export interface Backend {
   mode: 'local' | 'supabase';
@@ -47,6 +60,8 @@ export interface Backend {
   listMyOffers(): Promise<Offer[]>;
   sendOffer(o: OfferInput): Promise<Offer>;
   subscribeRequests(onRequest: (r: QuoteRequest) => void): () => void;
+  /** AI drafts for the vendor to review (needs the online database and the ai-assist function). */
+  aiAssist(input: AiInput): Promise<ProductDraft[]>;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -193,6 +208,9 @@ const localBackend: Backend = {
   subscribeRequests(onRequest) {
     requestListeners.add(onRequest);
     return () => { requestListeners.delete(onRequest); };
+  },
+  async aiAssist() {
+    throw new AiError('unavailable'); // the demo has no server to keep the AI key on
   },
 };
 
@@ -406,6 +424,16 @@ function supabaseBackend(url: string, key: string): Backend {
           (payload) => onRequest(fromRequestRow(payload.new as RequestRow)))
         .subscribe();
       return () => { sb.removeChannel(ch); };
+    },
+    async aiAssist(input) {
+      const { data, error } = await sb.functions.invoke('ai-assist', { body: input });
+      if (error) {
+        // The function answers { error: code } with a status; read the code when there is one
+        const ctx = (error as { context?: Response }).context;
+        const code = ctx?.json ? await ctx.json().then((b: { error?: string }) => b.error).catch(() => undefined) : undefined;
+        throw new AiError(code ?? 'unavailable');
+      }
+      return (data as { items: ProductDraft[] }).items ?? [];
     },
   };
 }
