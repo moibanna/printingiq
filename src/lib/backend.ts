@@ -148,14 +148,14 @@ type ProductRow = {
   id: string; vendor_id: string; category_id: string; name: Product['name']; description: Product['description'];
   price: number | null; currency: Product['currency']; unit: Product['unit']; min_order: number | null;
   colors: Product['colors']; thickness: string[]; sizes: string[]; brand: string | null; origin: string | null;
-  sku: string | null; stock_qty: number | null; availability: Product['availability']; images: string[]; created_at: string;
+  sku: string | null; stock_qty: number | null; availability: Product['availability']; images: string[]; created_at: string; template_id: string | null;
 };
 const fromProductRow = (r: ProductRow): Product => ({
   id: r.id, vendorId: r.vendor_id, categoryId: r.category_id, name: r.name, description: r.description,
   price: r.price, currency: r.currency, unit: r.unit, minOrder: r.min_order ?? undefined, colors: r.colors ?? [],
   thickness: r.thickness ?? [], sizes: r.sizes ?? [], brand: r.brand ?? undefined, origin: r.origin ?? undefined,
   sku: r.sku ?? undefined, stockQty: r.stock_qty ?? undefined, availability: r.availability,
-  images: r.images ?? [], createdAt: r.created_at,
+  images: r.images ?? [], createdAt: r.created_at, templateId: r.template_id ?? undefined,
 });
 
 type LeadRow = {
@@ -193,6 +193,7 @@ function supabaseBackend(url: string, key: string): Backend {
     currency: p.currency, unit: p.unit, min_order: p.minOrder ?? null, colors: p.colors, thickness: p.thickness,
     sizes: p.sizes, brand: p.brand ?? null, origin: p.origin ?? null, sku: p.sku ?? null, stock_qty: p.stockQty ?? null,
     availability: p.availability, images: await Promise.all(p.images.map((u) => uploadImage(sb, id, u))),
+    template_id: p.templateId ?? null,
   });
   const upsertVendor = async (id: string, v: VendorInput) =>
     must(await sb.from('vendors').upsert({

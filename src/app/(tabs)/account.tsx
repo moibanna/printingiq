@@ -4,6 +4,7 @@ import { Linking, Platform, Pressable, View } from 'react-native';
 import { Icon, IconName } from '../../components/icons';
 import { Text } from '../../components/text';
 import { Button, Chip, Field, H, LangSwitcher, Muted, ProductThumb, s, Screen } from '../../components/ui';
+import { BulkPriceChange, PriceListEditor } from '../../components/vendorTools';
 import { CITIES, Lead } from '../../lib/catalog';
 import { formatPrice, intlPhone } from '../../lib/format';
 import { StringKey, useI18n } from '../../lib/i18n';
@@ -129,7 +130,7 @@ function LeadCard({ lead }: { lead: Lead }) {
   );
 }
 
-type Tab = 'inquiries' | 'products' | 'shop';
+type Tab = 'inquiries' | 'prices' | 'products' | 'shop';
 
 function Dashboard() {
   const { t, tl, lang } = useI18n();
@@ -144,7 +145,8 @@ function Dashboard() {
   const mine = products.filter((p) => p.vendorId === me.id);
 
   const tabs: [Tab, StringKey, IconName, number?][] = [
-    ['inquiries', 'inquiries', 'inbox', unread], ['products', 'myProducts', 'grid', mine.length], ['shop', 'myShop', 'store'],
+    ['inquiries', 'inquiries', 'inbox', unread], ['prices', 'priceList', 'receipt'], ['products', 'myProducts', 'grid', mine.length],
+    ['shop', 'myShop', 'store'],
   ];
 
   return (
@@ -170,10 +172,10 @@ function Dashboard() {
         </Pressable>
       )}
 
-      <View style={{ flexDirection: 'row', gap: 8 }}>
+      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         {tabs.map(([k, label, icon, n]) => (
           <Pressable key={k} onPress={() => setTab(k)}
-            style={[s.chip, { flex: 1, justifyContent: 'center', paddingVertical: 10 }, tab === k && { backgroundColor: C.primary, borderColor: C.primary }]}>
+            style={[s.chip, { flex: 1, minWidth: 130, justifyContent: 'center', paddingVertical: 10 }, tab === k && { backgroundColor: C.primary, borderColor: C.primary }]}>
             <Icon name={icon} size={16} color={tab === k ? '#fff' : C.primary} />
             <Text style={[s.chipText, tab === k && { color: '#fff' }]}>{t(label)}</Text>
             {n ? (
@@ -192,6 +194,9 @@ function Dashboard() {
         </View>
       ))}
 
+      {tab === 'prices' && <PriceListEditor vendorId={me.id} />}
+
+      {tab === 'products' && mine.length > 0 && <BulkPriceChange products={mine} />}
       {tab === 'products' && (
         mine.length ? mine.map((p) => (
           <View key={p.id} style={[s.panel, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}>

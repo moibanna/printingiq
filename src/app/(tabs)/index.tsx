@@ -1,5 +1,5 @@
 import { ActivityIndicator, View } from 'react-native';
-import { GroupTile, HeroSlider, ProductGrid, RateBadge, Screen, SearchBox, SectionTitle, useColumns, useWide, VendorCta } from '../../components/ui';
+import { GroupTile, HeroSlider, ProductGrid, QuickActions, RateBadge, Screen, SearchBox, SectionTitle, useColumns, useWide, VendorCta } from '../../components/ui';
 import { GROUPS } from '../../lib/catalog';
 import { useI18n } from '../../lib/i18n';
 import { inCategory, sortProducts } from '../../lib/query';
@@ -18,6 +18,9 @@ export default function Home() {
       {!wide && <SearchBox />}
       {!wide && <RateBadge />}
       <HeroSlider />
+      <QuickActions items={[
+        { icon: 'scale', title: t('comparePrices'), sub: t('comparePricesSub'), href: '/prices' },
+      ]} />
 
       <SectionTitle title={t('categories')} href="/categories" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>

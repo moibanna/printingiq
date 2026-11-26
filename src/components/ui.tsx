@@ -172,7 +172,7 @@ export function Logo({ light }: { light?: boolean }) {
 export function WebHeader() {
   const { t } = useI18n();
   const { favorites, quote, unread, me } = useStore();
-  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['sell', '/sell']];
+  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['comparePrices', '/prices'], ['sell', '/sell']];
   return (
     <View style={{ backgroundColor: '#fff', borderBottomWidth: 1, borderColor: C.border }}>
       <View style={{ backgroundColor: C.accentSoft }}>
@@ -506,6 +506,28 @@ export function SubTile({ category, count }: { category: Category; count?: numbe
         {count ? <Text style={{ fontSize: 10, color: C.muted }}>{count}</Text> : null}
       </Pressable>
     </Link>
+  );
+}
+
+/** Shortcuts under the banner: compare prices, request offers (see QUICK_ACTIONS). */
+export function QuickActions({ items }: { items: { icon: IconName; title: string; sub: string; href: string }[] }) {
+  const wide = useWide();
+  return (
+    <View style={{ flexDirection: wide ? 'row' : 'column', gap: 10 }}>
+      {items.map((a) => (
+        <Link key={a.href} href={a.href as never} asChild>
+          <Pressable style={flat(s.panel, { flex: wide ? 1 : undefined, flexDirection: 'row', alignItems: 'center', gap: 12 })}>
+            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={a.icon} size={22} color={C.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: C.text }}>{a.title}</Text>
+              <Text style={{ fontSize: 12, color: C.muted }}>{a.sub}</Text>
+            </View>
+          </Pressable>
+        </Link>
+      ))}
+    </View>
   );
 }
 

@@ -30,6 +30,8 @@ function Root() {
         <Stack.Screen name="vendor/[id]" options={{ title: t('myShop') }} />
         <Stack.Screen name="search" options={{ title: t('allProducts') }} />
         <Stack.Screen name="favorites" options={{ title: t('favorites') }} />
+        <Stack.Screen name="prices/index" options={{ title: t('comparePrices') }} />
+        <Stack.Screen name="prices/[id]" options={{ title: t('comparePrices') }} />
       </Stack>
       <InquiryBanner />
     </View>

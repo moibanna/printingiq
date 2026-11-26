@@ -30,6 +30,7 @@ export default function ProductScreen() {
   const inQuote = quote.find((q) => q.productId === p.id);
   const minQ = p.minOrder ?? 1;
   const mine = me?.id === p.vendorId;
+  const others = p.templateId ? new Set(products.filter((x) => x.templateId === p.templateId && x.vendorId !== p.vendorId).map((x) => x.vendorId)).size : 0;
 
   const VendorCard = v ? (
     <View style={[s.panel, { borderColor: C.primary, borderWidth: 1.5 }]}>
@@ -74,6 +75,14 @@ export default function ProductScreen() {
         </View>
       )}
       <SourceNote product={p} vendor={v} />
+      {others > 0 && (
+        <Pressable onPress={() => router.push(`/prices/${p.templateId}`)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.primarySoft, borderRadius: 10, padding: 10 }}>
+          <Icon name="scale" size={18} color={C.primary} />
+          <Text style={{ flex: 1, color: C.primary, fontWeight: '700', fontSize: 13 }}>{t('compareN').replace('{n}', String(others + 1))}</Text>
+          <Text style={{ color: C.primary }}>{arrow}</Text>
+        </Pressable>
+      )}
     </View>
   ) : null;
 

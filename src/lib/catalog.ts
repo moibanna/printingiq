@@ -190,6 +190,8 @@ export type Product = {
   createdAt: string;
   /** Original listing (shop page or social post) for imported products */
   sourceUrl?: string;
+  /** Standard item this product is (src/lib/standards.ts), so customers can compare its price across vendors */
+  templateId?: string;
 };
 
 const empty: Localized = { en: '', ar: '', ckb: '' };

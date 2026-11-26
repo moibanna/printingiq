@@ -39,6 +39,9 @@ create table if not exists public.products (
   images text[] not null default '{}',
   created_at timestamptz not null default now()
 );
+-- Standard item (src/lib/standards.ts) the product is, for price comparison across vendors
+alter table public.products add column if not exists template_id text;
+create index if not exists products_template_idx on public.products (template_id) where template_id is not null;
 create index if not exists products_category_idx on public.products (category_id, created_at desc);
 create index if not exists products_vendor_idx on public.products (vendor_id);
 

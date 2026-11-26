@@ -57,3 +57,14 @@ export function hostOf(url: string): string {
   const m = /^[a-z]+:\/\/(?:www\.)?([^/?#]+)/i.exec(url);
   return m ? m[1] : url;
 }
+
+/** Rounds a price the way Iraqi shops quote it: dinars to 250 (50 under 5,000), dollars to cents. */
+export function roundShopPrice(price: number, currency: Currency): number {
+  if (currency === 'USD') return Math.round(price * 100) / 100;
+  const step = price >= 5000 ? 250 : 50;
+  return Math.max(step, Math.round(price / step) * step);
+}
+
+/** Price in dinars, for comparing across currencies at today's rate. */
+export const priceInIQD = (p: Pick<Product, 'price' | 'currency'>, ex: Exchange) =>
+  p.price == null ? null : p.currency === 'USD' ? p.price * ex.iqdPerUsd : p.price;
