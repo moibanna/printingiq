@@ -254,3 +254,15 @@ export type Offer = {
   days?: number;
   createdAt: string;
 };
+
+/** A vendor's request to import their shop from a link, or to claim an imported shop (approved by PrintingIQ). */
+export type ShopLink = {
+  id: string;
+  kind: 'import' | 'claim';
+  url?: string;
+  sourceId?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  lastResult?: string;
+  syncedAt?: string;
+  createdAt: string;
+};

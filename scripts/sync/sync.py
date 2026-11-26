@@ -24,11 +24,13 @@ sys.path.insert(0, str(HERE))
 import custom  # noqa: E402
 import exchange  # noqa: E402
 import generic  # noqa: E402
+import linked  # noqa: E402
 
 ROOT = HERE.parent.parent
 OUT = ROOT / 'public' / 'catalog.json'
 REPORT = HERE / 'last-report.json'
 ADAPTERS = {**custom.ADAPTERS, **generic.ADAPTERS}
+ADAPTERS['website'] = lambda src: linked.import_website(src, ADAPTERS)
 VENDOR_FIELDS = ('id', 'name', 'city', 'phone', 'whatsapp', 'email', 'website', 'about')
 
 
@@ -45,11 +47,23 @@ def vendor_of(src: dict, synced_at: str | None) -> dict:
 def main(only: list[str]):
     config = json.loads((HERE / 'sources.json').read_text(encoding='utf-8'))
     sources = [s for s in config['sources'] if s.get('enabled', True)]
+    # Shops vendors linked from their dashboard and PrintingIQ approved (see linked.py)
+    try:
+        links = linked.approved_links()
+    except Exception as e:  # the database being down must not stop the daily catalog
+        print(f'✗ linked shops: {e}', file=sys.stderr)
+        links = []
+    known = {s['id'] for s in sources}
+    sources += [s for s in linked.sources(links) if s['id'] not in known]
+    claimed = linked.claims(links)
+    claimed_by = {c['vendor_id']: sid for sid, c in claimed.items()}
+
     old = json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else {'vendors': [], 'products': []}
     old_products: dict[str, list] = {}
     for p in old['products']:
-        old_products.setdefault(p['vendorId'], []).append(p)
-    old_vendor = {v['id']: v for v in old['vendors']}
+        # A claimed shop's products carry the claiming vendor's id; file them under the shop's source again
+        old_products.setdefault(claimed_by.get(p['vendorId'], p['vendorId']), []).append(p)
+    old_vendor = {claimed_by.get(v['id'], v['id']): v for v in old['vendors']}
 
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
     vendors, products, report = [], [], []
@@ -73,15 +87,23 @@ def main(only: list[str]):
             vendors.append(vendor_of(src, now))
             report.append({'id': sid, 'ok': True, 'products': len(fresh), 'before': len(prev), 'seconds': round(time.time() - started)})
             print(f'✓ {sid}: {len(fresh)} products (was {len(prev)})')
+            if src.get('linkId'):
+                linked.report(src['linkId'], f'ok: {len(fresh)} products')
         except Exception as e:  # keep yesterday's data for this source
             products += prev
             vendors.append(vendor_of(src, old_vendor.get(sid, {}).get('syncedAt')))
             report.append({'id': sid, 'ok': False, 'error': f'{type(e).__name__}: {e}', 'kept': len(prev)})
             print(f'✗ {sid}: {e} — kept {len(prev)} previous products', file=sys.stderr)
             traceback.print_exc(limit=2)
+            if src.get('linkId'):
+                linked.report(src['linkId'], f'error: {e}')
 
     rate, rate_msg = exchange.daily_rate(config.get('exchangeRate'), old.get('exchange'), now[:10])
     print(f'$ exchange rate: {rate_msg}')
+
+    vendors, products = linked.apply_claims(vendors, products, claimed)
+    for sid, c in claimed.items():
+        linked.report(c['id'], f"ok: {sum(1 for p in products if p['vendorId'] == c['vendor_id'])} products from {sid}")
 
     seen, unique = set(), []
     for p in products:

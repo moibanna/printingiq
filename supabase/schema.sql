@@ -226,3 +226,26 @@ create table if not exists public.ai_usage (
   primary key (vendor_id, day)
 );
 alter table public.ai_usage enable row level security;  -- no policies: only the function (service role) reads and writes it
+
+-- ═════════════ Shop links: vendors ask PrintingIQ to import their shop, or claim an imported one ═════════════
+-- An admin approves each row in the Supabase table editor (status = 'approved'); the daily sync
+-- (scripts/sync/linked.py, with the service-role key in GitHub secrets) then imports it and writes back the result.
+create table if not exists public.shop_links (
+  id uuid primary key default gen_random_uuid(),
+  vendor_id uuid not null references public.vendors(id) on delete cascade,
+  kind text not null check (kind in ('import','claim')),
+  url text check (length(url) <= 500),
+  source_id text,                                 -- for claims: the imported shop's id (e.g. 'toolmart')
+  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  last_result text,
+  synced_at timestamptz,
+  created_at timestamptz not null default now()
+);
+alter table public.shop_links enable row level security;
+drop policy if exists "vendor reads own links" on public.shop_links;
+create policy "vendor reads own links" on public.shop_links for select using (auth.uid() = vendor_id);
+drop policy if exists "vendor adds links" on public.shop_links;
+create policy "vendor adds links" on public.shop_links for insert
+  with check (auth.uid() = vendor_id and status = 'pending' and last_result is null and synced_at is null);
+drop policy if exists "vendor removes own links" on public.shop_links;
+create policy "vendor removes own links" on public.shop_links for delete using (auth.uid() = vendor_id);

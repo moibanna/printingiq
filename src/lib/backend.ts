@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import type { ProductDraft } from './bulkImport';
-import { Attachment, Lead, Offer, Product, QuoteRequest, Vendor } from './catalog';
+import { Attachment, Lead, Offer, Product, QuoteRequest, ShopLink, Vendor } from './catalog';
 
 /**
  * Two backends behind one interface:
@@ -62,6 +62,10 @@ export interface Backend {
   subscribeRequests(onRequest: (r: QuoteRequest) => void): () => void;
   /** AI drafts for the vendor to review (needs the online database and the ai-assist function). */
   aiAssist(input: AiInput): Promise<ProductDraft[]>;
+  // Shop links: import my shop from a link / claim an imported shop
+  listMyLinks(): Promise<ShopLink[]>;
+  addLink(l: Pick<ShopLink, 'kind' | 'url' | 'sourceId'>): Promise<ShopLink>;
+  removeLink(id: string): Promise<void>;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -70,6 +74,7 @@ const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(
 const K = {
   products: 'printingiq.products', vendors: 'printingiq.vendors', accounts: 'printingiq.accounts',
   session: 'printingiq.session', leads: 'printingiq.leads', requests: 'printingiq.requests', offers: 'printingiq.offers',
+  links: 'printingiq.links',
 };
 type LocalAccount = { email: string; password: string; vendorId: string };
 
@@ -211,6 +216,20 @@ const localBackend: Backend = {
   },
   async aiAssist() {
     throw new AiError('unavailable'); // the demo has no server to keep the AI key on
+  },
+  async listMyLinks() {
+    const me = await this.getMyVendor();
+    return me ? (await readJSON<(ShopLink & { vendorId: string })[]>(K.links, [])).filter((l) => l.vendorId === me.id) : [];
+  },
+  async addLink(l) {
+    const me = await this.getMyVendor();
+    if (!me) throw new Error('Sign in first');
+    const link = { ...l, id: uid(), vendorId: me.id, status: 'pending' as const, createdAt: new Date().toISOString() };
+    await writeJSON(K.links, [link, ...(await readJSON<ShopLink[]>(K.links, []))]);
+    return link;
+  },
+  async removeLink(id) {
+    await writeJSON(K.links, (await readJSON<ShopLink[]>(K.links, [])).filter((l) => l.id !== id));
   },
 };
 
@@ -424,6 +443,25 @@ function supabaseBackend(url: string, key: string): Backend {
           (payload) => onRequest(fromRequestRow(payload.new as RequestRow)))
         .subscribe();
       return () => { sb.removeChannel(ch); };
+    },
+    async listMyLinks() {
+      const id = await userId();
+      if (!id) return [];
+      type LinkRow = { id: string; kind: ShopLink['kind']; url: string | null; source_id: string | null; status: ShopLink['status']; last_result: string | null; synced_at: string | null; created_at: string };
+      return (must(await sb.from('shop_links').select('*').eq('vendor_id', id).order('created_at', { ascending: false })) as LinkRow[]).map((r) => ({
+        id: r.id, kind: r.kind, url: r.url ?? undefined, sourceId: r.source_id ?? undefined, status: r.status,
+        lastResult: r.last_result ?? undefined, syncedAt: r.synced_at ?? undefined, createdAt: r.created_at,
+      }));
+    },
+    async addLink(l) {
+      const id = await userId();
+      if (!id) throw new Error('Sign in first');
+      const linkId = crypto.randomUUID();
+      must(await sb.from('shop_links').insert({ id: linkId, vendor_id: id, kind: l.kind, url: l.url ?? null, source_id: l.sourceId ?? null }));
+      return { ...l, id: linkId, status: 'pending', createdAt: new Date().toISOString() };
+    },
+    async removeLink(lid) {
+      must(await sb.from('shop_links').delete().eq('id', lid));
     },
     async aiAssist(input) {
       const { data, error } = await sb.functions.invoke('ai-assist', { body: input });

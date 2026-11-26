@@ -92,6 +92,19 @@ The vendor's account must be a business or creator account.
 Not supported: Facebook doesn't let apps read other businesses' pages, WhatsApp channels have no public feed,
 and OpenSooq's terms forbid copying listings. Ask those vendors to open a PrintingIQ vendor account instead.
 
+## Shops vendors link themselves
+
+Vendors can paste a link to their website, Telegram channel or Instagram account (Dashboard → My shop), or say that
+a shop PrintingIQ already imports is theirs. Each request waits in the `shop_links` table in Supabase:
+
+1. Check the request (call the vendor if needed), then set `status` to `approved` (or `rejected`) in the Supabase
+   table editor.
+2. The next nightly run imports it into the vendor's own shop and writes the result in `last_result`, which the
+   vendor sees in their dashboard.
+
+This needs two repository secrets on GitHub (Settings → Secrets and variables → Actions): `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`. Without them linked shops are skipped and everything else runs as before.
+
 ## Vendors with their own API
 
 `custom.py` reads Print Way, 365 Promo and Penna through their websites' own catalog APIs

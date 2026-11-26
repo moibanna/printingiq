@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { categoryById, Currency, emptyProduct, GROUPS, Product } from '../lib/catalog';
+import { backend } from '../lib/backend';
+import { categoryById, Currency, emptyProduct, GROUPS, Product, ShopLink } from '../lib/catalog';
 import { formatPrice, roundShopPrice, unitKey } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { foldText } from '../lib/query';
@@ -171,6 +172,91 @@ export function BulkPriceChange({ products }: { products: Product[] }) {
       )}
       <Button small icon="check" title={t('applyChange').replace('{n}', String(target.length))} onPress={apply} disabled={!valid || busy || !target.length} />
       {msg ? <Text style={{ color: C.success, fontSize: 13 }}>{msg}</Text> : null}
+    </View>
+  );
+}
+
+const statusKey = { pending: 'linkPending', approved: 'linkApproved', rejected: 'linkRejected' } as const;
+const statusColor = { pending: C.accent, approved: C.success, rejected: C.danger } as const;
+
+/** Vendor dashboard → My shop: import my shop from a link, or claim a shop PrintingIQ already imports. */
+export function ShopLinks() {
+  const { t } = useI18n();
+  const { vendors } = useStore();
+  const [links, setLinks] = useState<ShopLink[] | null>(null);
+  const [url, setUrl] = useState('');
+  const [err, setErr] = useState('');
+  const [reload, setReload] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    backend.listMyLinks().then((l) => { if (alive) setLinks(l); }).catch(() => { if (alive) setLinks([]); });
+    return () => { alive = false; };
+  }, [reload]);
+
+  async function send() {
+    setErr('');
+    const u = url.trim();
+    if (!/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(u)) return setErr(t('linkBad'));
+    if (/facebook\.com|fb\.com|wa\.me|whatsapp\.com|opensooq/i.test(u)) return setErr(t('linkUnsupported'));
+    await backend.addLink({ kind: 'import', url: /^https?:\/\//i.test(u) ? u : `https://${u}` });
+    setUrl('');
+    setReload((n) => n + 1);
+  }
+  async function claim(sourceId: string) {
+    await backend.addLink({ kind: 'claim', sourceId });
+    setReload((n) => n + 1);
+  }
+  async function remove(id: string) {
+    await backend.removeLink(id);
+    setReload((n) => n + 1);
+  }
+
+  const imported = Object.values(vendors).filter((v) => v.imported);
+  const claimedIds = new Set((links ?? []).filter((l) => l.kind === 'claim').map((l) => l.sourceId));
+  return (
+    <View style={{ gap: 10 }}>
+      <View style={s.panel}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="link" size={18} color={C.primary} />
+          <Text style={{ fontWeight: '700', color: C.text }}>{t('importLink')}</Text>
+        </View>
+        <Muted style={{ fontSize: 12 }}>{t('importLinkSub')}</Muted>
+        <TextInput value={url} onChangeText={setUrl} placeholder={t('linkPlaceholder')} autoCapitalize="none" keyboardType="url"
+          style={[s.input, { direction: 'ltr', textAlign: 'left' } as object]} />
+        {err ? <Text style={{ color: C.danger, fontSize: 13 }}>{err}</Text> : null}
+        <Button small icon="send" title={t('sendLink')} onPress={send} disabled={!url.trim()} />
+        {(links ?? []).map((l) => (
+          <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.bg, borderRadius: 8, padding: 8, flexWrap: 'wrap' }}>
+            <Icon name={l.kind === 'claim' ? 'store' : 'link'} size={15} color={C.muted} />
+            <View style={{ flex: 1, minWidth: 180 }}>
+              <Text numberOfLines={1} style={{ fontSize: 13, color: C.text, direction: 'ltr' } as object}>
+                {l.kind === 'claim' ? vendors[l.sourceId ?? '']?.name ?? l.sourceId : l.url}
+              </Text>
+              <Text style={{ fontSize: 11, color: statusColor[l.status], fontWeight: '700' }}>{t(statusKey[l.status])}</Text>
+              {l.lastResult ? <Muted style={{ fontSize: 11 }}>{t('lastImport').replace('{r}', `${l.lastResult}${l.syncedAt ? ` · ${l.syncedAt.slice(0, 10)}` : ''}`)}</Muted> : null}
+            </View>
+            <Button small variant="ghost" icon="trash" title={t('remove')} onPress={() => remove(l.id)} />
+          </View>
+        ))}
+      </View>
+
+      {imported.length > 0 && (
+        <View style={s.panel}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="store" size={18} color={C.primary} />
+            <Text style={{ fontWeight: '700', color: C.text }}>{t('claimShop')}</Text>
+          </View>
+          <Muted style={{ fontSize: 12 }}>{t('claimShopSub')}</Muted>
+          {imported.map((v) => (
+            <View key={v.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <Text style={{ flex: 1, color: C.text, fontSize: 13 }}>{v.name}{v.city ? ` · ${v.city}` : ''}</Text>
+              {claimedIds.has(v.id)
+                ? <Text style={{ color: C.accent, fontSize: 12, fontWeight: '700' }}>{t('linkPending')}</Text>
+                : <Button small variant="outline" icon="check" title={t('claimThis')} onPress={() => claim(v.id)} />}
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }

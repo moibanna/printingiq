@@ -36,6 +36,9 @@ jobs:
           # Optional, only for Instagram sources (see scripts/sync/README.md)
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          # Optional: shops vendors linked from their dashboard (see scripts/sync/linked.py)
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         # The 11:30 and 15:00 runs pass "rate", which matches no vendor, so every vendor keeps its data and only the rate updates
         run: python scripts/sync/sync.py ${{ (github.event.schedule == '30 8 * * *' || github.event.schedule == '0 12 * * *') && 'rate' || '' }}
 

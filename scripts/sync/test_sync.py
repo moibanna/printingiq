@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from classify import category_for, find_price, lang_of  # noqa: E402
 from generic import _post_product, parse_telegram  # noqa: E402
 import exchange  # noqa: E402
+import linked  # noqa: E402
 
 
 class Categories(unittest.TestCase):
@@ -159,6 +160,30 @@ class ExchangeRate(unittest.TestCase):
             raise OSError('offline')
         exchange.get_text = down
         self.assertEqual(exchange.daily_rate(None, prev, '2026-11-25')[0], prev)
+
+
+class LinkedShops(unittest.TestCase):
+    def test_detect(self):
+        self.assertEqual(linked.detect('https://t.me/s/zanasign'), {'adapter': 'telegram', 'channel': 'zanasign'})
+        self.assertEqual(linked.detect('t.me/zanasign'), {'adapter': 'telegram', 'channel': 'zanasign'})
+        self.assertEqual(linked.detect('https://www.instagram.com/zana.sign/'), {'adapter': 'instagram', 'username': 'zana.sign'})
+        self.assertEqual(linked.detect('https://shop.example.iq/collections/all?x=1'), {'adapter': 'website', 'url': 'https://shop.example.iq'})
+        with self.assertRaises(ValueError):
+            linked.detect('https://www.facebook.com/zanasign')
+
+    def test_sources_and_claims(self):
+        v = {'id': 'u1', 'name': 'Zana Sign', 'city': 'Erbil', 'phone': '0750', 'whatsapp': None, 'email': None, 'about': None}
+        links = [
+            {'id': 'l1', 'kind': 'import', 'url': 't.me/zanasign', 'source_id': None, 'vendor_id': 'u1', 'vendors': v},
+            {'id': 'l2', 'kind': 'claim', 'url': '', 'source_id': 'toolmart', 'vendor_id': 'u2', 'vendors': v},
+        ]
+        [src] = linked.sources(links)
+        self.assertEqual((src['id'], src['adapter'], src['channel'], src['name']), ('u1', 'telegram', 'zanasign', 'Zana Sign'))
+        vendors, products = linked.apply_claims(
+            [{'id': 'toolmart', 'name': 'Toolmart'}, {'id': 'penna', 'name': 'Penna'}],
+            [{'id': 'toolmart-1', 'vendorId': 'toolmart'}, {'id': 'penna-1', 'vendorId': 'penna'}], linked.claims(links))
+        self.assertEqual([v['id'] for v in vendors], ['u2', 'penna'])
+        self.assertEqual([p['vendorId'] for p in products], ['u2', 'penna'])
 
 
 if __name__ == '__main__':

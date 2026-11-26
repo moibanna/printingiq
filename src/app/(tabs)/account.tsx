@@ -5,7 +5,7 @@ import { Icon, IconName } from '../../components/icons';
 import { Text } from '../../components/text';
 import { Button, Chip, Field, H, LangSwitcher, Muted, ProductThumb, s, Screen } from '../../components/ui';
 import { RequestsInbox } from '../../components/requests';
-import { BulkPriceChange, PriceListEditor } from '../../components/vendorTools';
+import { BulkPriceChange, PriceListEditor, ShopLinks } from '../../components/vendorTools';
 import { CITIES, Lead } from '../../lib/catalog';
 import { formatPrice, intlPhone } from '../../lib/format';
 import { StringKey, useI18n } from '../../lib/i18n';
@@ -222,6 +222,7 @@ function Dashboard() {
         )) : <Muted>{t('noProducts')}</Muted>
       )}
 
+      {tab === 'shop' && <ShopLinks />}
       {tab === 'shop' && (
         <View style={s.panel}>
           <ShopFields v={shop} set={(k, val) => setShop((x) => ({ ...x, [k]: val }))} />

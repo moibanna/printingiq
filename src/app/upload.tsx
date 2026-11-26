@@ -112,6 +112,7 @@ export default function Upload() {
       extra: Platform.OS === 'web' ? <Button small variant="ghost" icon="upload" title={t('downloadTemplate')} onPress={() => download('printingiq-products.csv', templateCsv())} /> : null },
     { icon: 'receipt', title: 'fromPriceList', sub: 'fromPriceListSub', action: fromPriceList, ai: true },
     { icon: 'camera', title: 'fromPhotos', sub: 'fromPhotosSub', action: fromPhotos, ai: true },
+    { icon: 'link', title: 'fromLink', sub: 'fromLinkSub', action: () => router.push({ pathname: '/account', params: { tab: 'shop' } }) },
   ];
 
   return (
@@ -136,7 +137,7 @@ export default function Upload() {
               </View>
               <View style={s.row}>
                 {w.extra}
-                <Button small icon="upload" title={w.icon === 'camera' ? t('choosePhotos') : t('chooseFile')} onPress={w.action} disabled={!!busy} />
+                <Button small icon={w.icon === 'link' ? 'link' : 'upload'} title={w.icon === 'camera' ? t('choosePhotos') : w.icon === 'link' ? t('importLink') : t('chooseFile')} onPress={w.action} disabled={!!busy} />
               </View>
             </View>
           ))}
