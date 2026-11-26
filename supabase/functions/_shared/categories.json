@@ -1,0 +1,238 @@
+[
+ {
+  "id": "acrylic",
+  "name": "Acrylic sheets / ألواح أكريليك"
+ },
+ {
+  "id": "foam",
+  "name": "Foam & PVC board / فوم بورد و PVC"
+ },
+ {
+  "id": "acp",
+  "name": "Alucobond (ACP) / ألكوبوند"
+ },
+ {
+  "id": "flex",
+  "name": "Flex banner / فليكس"
+ },
+ {
+  "id": "vinyl",
+  "name": "Stickers & vinyl / ستيكر وفينيل"
+ },
+ {
+  "id": "paper",
+  "name": "Paper & cardboard / ورق وكارتون"
+ },
+ {
+  "id": "led",
+  "name": "LED, light boxes & power supplies / ليد وصناديق ضوئية ومحولات"
+ },
+ {
+  "id": "stands",
+  "name": "Roll-ups & display stands / رول أب وستاندات عرض"
+ },
+ {
+  "id": "menu-stand",
+  "name": "Table & menu stands / ستاند طاولة ومنيو"
+ },
+ {
+  "id": "door-sign",
+  "name": "Door signs & name plates / لوحات أبواب"
+ },
+ {
+  "id": "large-format",
+  "name": "Large-format printers / طابعات الفليكس والإعلان"
+ },
+ {
+  "id": "uv-printer",
+  "name": "UV printers / طابعات UV"
+ },
+ {
+  "id": "laser-cnc",
+  "name": "Laser & CNC machines / مكائن ليزر و CNC"
+ },
+ {
+  "id": "plotter",
+  "name": "Cutting plotters / بلوتر قص"
+ },
+ {
+  "id": "heat-press",
+  "name": "Sublimation & heat press / مكائن سبلميشن وكبس حراري"
+ },
+ {
+  "id": "office-print",
+  "name": "Digital presses & copiers / طابعات رقمية واستنساخ"
+ },
+ {
+  "id": "screens",
+  "name": "Digital signage screens / شاشات إعلانية"
+ },
+ {
+  "id": "tools",
+  "name": "Tools & spare parts / أدوات وقطع غيار"
+ },
+ {
+  "id": "solvent-ink",
+  "name": "Solvent & eco-solvent ink / حبر سولفنت وإيكو سولفنت"
+ },
+ {
+  "id": "uv-ink",
+  "name": "UV ink / حبر UV"
+ },
+ {
+  "id": "sublimation-ink",
+  "name": "Sublimation ink & paper / حبر وورق سبلميشن"
+ },
+ {
+  "id": "toner",
+  "name": "Toner & cartridges / تونر وخراطيش"
+ },
+ {
+  "id": "lamination",
+  "name": "Lamination film / رول سلفنة"
+ },
+ {
+  "id": "business-cards",
+  "name": "Business cards / كروت شخصية"
+ },
+ {
+  "id": "flyers",
+  "name": "Flyers & brochures / فلايرات وبروشورات"
+ },
+ {
+  "id": "banner-print",
+  "name": "Banner & poster printing / طباعة بنرات وبوسترات"
+ },
+ {
+  "id": "packaging",
+  "name": "Boxes & packaging / علب وتغليف"
+ },
+ {
+  "id": "sticker-print",
+  "name": "Label & sticker printing / طباعة ليبل وستيكر"
+ },
+ {
+  "id": "pens",
+  "name": "Pens / أقلام"
+ },
+ {
+  "id": "notebooks",
+  "name": "Notebooks & agendas / دفاتر وأجندات"
+ },
+ {
+  "id": "folders",
+  "name": "Folders & files / فولدرات وملفات"
+ },
+ {
+  "id": "office-paper",
+  "name": "A4 & copy paper / ورق A4 واستنساخ"
+ },
+ {
+  "id": "calculators",
+  "name": "Calculators / آلات حاسبة"
+ },
+ {
+  "id": "pen-box",
+  "name": "Pen boxes & desk sets / علب أقلام وأطقم مكتب"
+ },
+ {
+  "id": "card-holder",
+  "name": "Business card & ID holders / حافظات كروت وباجات"
+ },
+ {
+  "id": "certificate-holder",
+  "name": "Certificate holders / حافظات شهادات"
+ },
+ {
+  "id": "office-supplies",
+  "name": "Office supplies / مستلزمات مكتبية"
+ },
+ {
+  "id": "mugs",
+  "name": "Mugs & cups / أكواب"
+ },
+ {
+  "id": "thermos",
+  "name": "Thermos & bottles / ترامس وقناني"
+ },
+ {
+  "id": "keychains",
+  "name": "Keychains / ميداليات مفاتيح"
+ },
+ {
+  "id": "flash",
+  "name": "Flash memory / فلاش ميموري"
+ },
+ {
+  "id": "powerbank",
+  "name": "Power banks & mobile / باور بانك وإكسسوارات موبايل"
+ },
+ {
+  "id": "clocks",
+  "name": "Clocks & calendars / ساعات وتقاويم"
+ },
+ {
+  "id": "gift-box",
+  "name": "Gift boxes & VIP sets / علب وأطقم هدايا VIP"
+ },
+ {
+  "id": "gift-bags",
+  "name": "Gift & paper bags / أكياس هدايا وورقية"
+ },
+ {
+  "id": "frames",
+  "name": "Photo frames / إطارات صور"
+ },
+ {
+  "id": "tissue-box",
+  "name": "Tissue boxes / علب مناديل"
+ },
+ {
+  "id": "sunshade",
+  "name": "Car sunshades / مظلات سيارة"
+ },
+ {
+  "id": "holographic",
+  "name": "Holographic & special items / هولوغرام ومنتجات خاصة"
+ },
+ {
+  "id": "crystal",
+  "name": "Crystal awards / دروع كريستال"
+ },
+ {
+  "id": "wood-award",
+  "name": "Wooden plaques / دروع خشبية"
+ },
+ {
+  "id": "trophies",
+  "name": "Trophies / كؤوس"
+ },
+ {
+  "id": "medals",
+  "name": "Medals / ميداليات"
+ },
+ {
+  "id": "seals",
+  "name": "Certificate seals & stickers / أختام وستيكرات شهادات"
+ },
+ {
+  "id": "t-shirts",
+  "name": "T-shirts & polos / تيشيرتات"
+ },
+ {
+  "id": "hats",
+  "name": "Hats & caps / قبعات"
+ },
+ {
+  "id": "vests",
+  "name": "Vests & uniforms / سترات ويونيفورم"
+ },
+ {
+  "id": "bags",
+  "name": "Bags & tote bags / حقائب وحقائب قماش"
+ },
+ {
+  "id": "laptop-bags",
+  "name": "Laptop bags / حقائب لابتوب"
+ }
+]

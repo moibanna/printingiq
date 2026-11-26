@@ -309,6 +309,9 @@ const strings = {
   noReviews: { en: "No reviews yet.", ar: "لا توجد آراء بعد.", ckb: "هێشتا هیچ ڕایەک نییە." },
   ratingsCount: { en: "{n} ratings", ar: "{n} تقييم", ckb: "{n} هەڵسەنگاندن" },
   myRequestsRatings: { en: "My requests & ratings", ar: "طلباتي وتقييماتي", ckb: "داواکاری و هەڵسەنگاندنەکانم" },
+  fromWhatsapp: { en: "Send photos on WhatsApp", ar: "أرسل الصور على واتساب", ckb: "وێنە بە واتسئەپ بنێرە" },
+  fromWhatsappSub: { en: "Send each product photo with its price to the PrintingIQ WhatsApp number from your shop's phone; it appears in your shop.", ar: "أرسل صورة كل منتج مع سعره إلى رقم واتساب PrintingIQ من هاتف متجرك؛ يظهر في متجرك.", ckb: "وێنەی هەر بەرهەمێک لەگەڵ نرخەکەی لە مۆبایلی دوکانەکەتەوە بۆ ژمارەی واتسئەپی PrintingIQ بنێرە؛ لە دوکانەکەتدا دەردەکەوێت." },
+  openWhatsapp: { en: "Open WhatsApp", ar: "افتح واتساب", ckb: "کردنەوەی واتسئەپ" },
 } satisfies Record<string, Localized>;
 
 export type StringKey = keyof typeof strings;

@@ -283,3 +283,11 @@ begin
     on conflict (lead_id) do nothing;
 end $$;
 grant execute on function public.add_review(uuid, text, int, text) to anon, authenticated;
+
+-- ═════════════ WhatsApp bot (supabase/functions/whatsapp-bot) ═════════════
+alter table public.products add column if not exists added_via text;   -- 'whatsapp' for products sent to the bot
+create table if not exists public.wa_messages (                         -- WhatsApp message ids already handled
+  id text primary key,
+  created_at timestamptz not null default now()
+);
+alter table public.wa_messages enable row level security;              -- no policies: only the bot (service role) uses it

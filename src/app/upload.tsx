@@ -2,7 +2,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { ReactNode, useState } from 'react';
-import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Icon, IconName } from '../components/icons';
 import { Text, TextInput } from '../components/text';
 import { Button, Chip, Muted, s, Screen } from '../components/ui';
@@ -15,6 +15,7 @@ import { useStore } from '../lib/store';
 import { C } from '../lib/theme';
 
 type Row = ProductDraft & { on: boolean; key: string };
+const BOT_NUMBER = (process.env.EXPO_PUBLIC_WHATSAPP_BOT ?? '').replace(/\D/g, '');
 
 function download(name: string, text: string) {
   if (Platform.OS !== 'web') return;
@@ -113,6 +114,9 @@ export default function Upload() {
     { icon: 'receipt', title: 'fromPriceList', sub: 'fromPriceListSub', action: fromPriceList, ai: true },
     { icon: 'camera', title: 'fromPhotos', sub: 'fromPhotosSub', action: fromPhotos, ai: true },
     { icon: 'link', title: 'fromLink', sub: 'fromLinkSub', action: () => router.push({ pathname: '/account', params: { tab: 'shop' } }) },
+    // PrintingIQ's WhatsApp bot number (supabase/functions/whatsapp-bot), once it is set up
+    ...(BOT_NUMBER ? [{ icon: 'whatsapp' as IconName, title: 'fromWhatsapp' as StringKey, sub: 'fromWhatsappSub' as StringKey,
+      action: () => Linking.openURL(`https://wa.me/${BOT_NUMBER}`) }] : []),
   ];
 
   return (
@@ -137,7 +141,7 @@ export default function Upload() {
               </View>
               <View style={s.row}>
                 {w.extra}
-                <Button small icon={w.icon === 'link' ? 'link' : 'upload'} title={w.icon === 'camera' ? t('choosePhotos') : w.icon === 'link' ? t('importLink') : t('chooseFile')} onPress={w.action} disabled={!!busy} />
+                <Button small variant={w.icon === 'whatsapp' ? 'whatsapp' : 'primary'} icon={w.icon === 'link' || w.icon === 'whatsapp' ? w.icon : 'upload'} title={w.icon === 'camera' ? t('choosePhotos') : w.icon === 'link' ? t('importLink') : w.icon === 'whatsapp' ? t('openWhatsapp') : t('chooseFile')} onPress={w.action} disabled={!!busy} />
               </View>
             </View>
           ))}
