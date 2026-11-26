@@ -216,6 +216,30 @@
   "name": "Certificate seals & stickers / أختام وستيكرات شهادات"
  },
  {
+  "id": "install-flex",
+  "name": "Flex & banner installation / تركيب فليكس وبنرات"
+ },
+ {
+  "id": "install-sticker",
+  "name": "Sticker, glass & car wrapping / تركيب ستيكر وزجاج وتغليف سيارات"
+ },
+ {
+  "id": "install-sign",
+  "name": "3D letters & sign installation / تركيب حروف بارزة ولوحات"
+ },
+ {
+  "id": "install-acp",
+  "name": "Alucobond cladding / تركيب ألكوبوند"
+ },
+ {
+  "id": "design-service",
+  "name": "Graphic design / تصميم جرافيك"
+ },
+ {
+  "id": "sign-repair",
+  "name": "Sign maintenance & repair / صيانة اللوحات"
+ },
+ {
   "id": "t-shirts",
   "name": "T-shirts & polos / تيشيرتات"
  },

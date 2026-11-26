@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Image, Linking, Pressable, View } from 'react-native';
 import { ProductBrowser } from '../../components/browser';
 import { ContactSheet } from '../../components/contact';
 import { VendorReviews } from '../../components/ratings';
@@ -34,6 +34,15 @@ export default function VendorScreen() {
             {v.verified && <Icon name="verified" size={18} color={C.success} />}
             <RatingBadge vendorId={v.id} />
           </View>
+          {v.kind && v.kind !== 'shop' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Icon name={v.kind} size={15} color={C.accent} />
+              <Text style={{ color: C.accent, fontWeight: '700', fontSize: 13 }}>{t(`kind_${v.kind}`)}</Text>
+              {!!v.areas?.length && (
+                <Muted style={{ fontSize: 12 }}>· {t('worksIn').replace('{cities}', [v.city, ...v.areas].map((c) => cityName(c, tl)).join('، '))}</Muted>
+              )}
+            </View>
+          )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Icon name="pin" size={14} color={C.muted} /><Muted>{v.city ? cityName(v.city, tl) : '—'}</Muted>
@@ -64,6 +73,18 @@ export default function VendorScreen() {
         {me?.id !== v.id && !!v.phone && <Button variant="whatsapp" icon="whatsapp" title={t('contactVendor')} onPress={() => setContact(true)} />}
       </View>
 
+      {!!v.portfolio?.length && (
+        <View style={s.panel}>
+          <Text style={{ fontWeight: '700', color: C.text, fontSize: 15 }}>{t('ourWork')}</Text>
+          <View style={s.row}>
+            {v.portfolio.map((u) => (
+              <Pressable key={u} onPress={() => Linking.openURL(u)}>
+                <Image source={{ uri: u }} style={{ width: 140, height: 140, borderRadius: 10 }} />
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
       <VendorReviews vendorId={v.id} />
       <ProductBrowser key={v.id} products={list} />
       {contact && <ContactSheet vendor={v} visible={contact} onClose={() => setContact(false)} items={[{ productId: '', name: `${v.name} — PrintingIQ` }]} />}

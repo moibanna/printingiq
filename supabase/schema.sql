@@ -16,6 +16,10 @@ create table if not exists public.vendors (
 alter table public.vendors add column if not exists whatsapp text;
 alter table public.vendors add column if not exists email text;
 alter table public.vendors add column if not exists about text;
+-- shop | printhouse | installer (works on site, no shop); cities served; photos of finished work
+alter table public.vendors add column if not exists kind text not null default 'shop' check (kind in ('shop','printhouse','installer'));
+alter table public.vendors add column if not exists areas text[] not null default '{}';
+alter table public.vendors add column if not exists portfolio text[] not null default '{}';
 
 -- ───────────── Products. Text that needs translation is stored as {"en": "...", "ar": "...", "ckb": "..."}
 create table if not exists public.products (

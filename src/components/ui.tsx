@@ -172,7 +172,7 @@ export function Logo({ light }: { light?: boolean }) {
 export function WebHeader() {
   const { t } = useI18n();
   const { favorites, quote, unread, me, newRequests } = useStore();
-  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['getOffers', '/request'], ['comparePrices', '/prices'], ['sell', '/sell']];
+  const nav: [StringKey, string][] = [['home', '/'], ['categories', '/categories'], ['allProducts', '/search'], ['getOffers', '/request'], ['comparePrices', '/prices'], ['prosShort', '/pros'], ['sell', '/sell']];
   return (
     <View style={{ backgroundColor: '#fff', borderBottomWidth: 1, borderColor: C.border }}>
       <View style={{ backgroundColor: C.accentSoft }}>
@@ -186,15 +186,8 @@ export function WebHeader() {
           </Pressable>
         </View>
       </View>
-      <View style={[s.wrap, { flexDirection: 'row', alignItems: 'center', gap: 20, paddingVertical: 10 }]}>
+      <View style={[s.wrap, { flexDirection: 'row', alignItems: 'center', gap: 20, paddingTop: 10, paddingBottom: 4 }]}>
         <Logo />
-        <View style={{ flexDirection: 'row', gap: 2 }}>
-          {nav.map(([k, href]) => (
-            <Link key={k} href={href as never} asChild>
-              <Pressable style={s.navLink}><Text style={{ color: C.text, fontWeight: '600', fontSize: 13 }}>{t(k)}</Text></Pressable>
-            </Link>
-          ))}
-        </View>
         <View style={{ flex: 1 }}><SearchBox /></View>
         <IconBadge icon="heart" count={favorites.length} href="/favorites" label={t('favorites')} />
         <IconBadge icon="cart" count={quote.length} href="/quote" label={t('quoteList')} />
@@ -205,6 +198,14 @@ export function WebHeader() {
             {unread + newRequests > 0 && <View style={[s.badge, { position: 'relative', top: 0, end: 0 }]}><Text style={s.badgeText}>{unread + newRequests}</Text></View>}
           </Pressable>
         </Link>
+      </View>
+      {/* Menu on its own row, so it never squeezes the search box whatever the language or width */}
+      <View style={[s.wrap, { flexDirection: 'row', flexWrap: 'wrap', gap: 2, paddingBottom: 6 }]}>
+        {nav.map(([k, href]) => (
+          <Link key={k} href={href as never} asChild>
+            <Pressable style={s.navLink}><Text style={{ color: C.text, fontWeight: '600', fontSize: 13 }}>{t(k)}</Text></Pressable>
+          </Link>
+        ))}
       </View>
     </View>
   );

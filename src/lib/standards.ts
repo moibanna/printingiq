@@ -88,6 +88,18 @@ export const STANDARD_ITEMS: StandardItem[] = [
   i('wood-plaque', 'wood-award', 'piece', 'Wooden plaque with print', 'درع خشبي مطبوع', 'خەڵاتی داری چاپکراو'),
   i('medal', 'medals', 'piece', 'Metal medal with ribbon', 'ميدالية معدنية مع شريط', 'مەدالیای کانزا لەگەڵ شریت'),
   i('trophy', 'trophies', 'piece', 'Trophy cup', 'كأس', 'جام'),
+  // Installation & design
+  i('inst-flex', 'install-flex', 'm2', 'Flex installation on frame', 'تركيب فليكس على هيكل', 'دانانی فلێکس لەسەر چوارچێوە', perM2),
+  i('inst-frame', 'install-flex', 'm2', 'Iron frame for flex sign', 'هيكل حديد للوحة فليكس', 'چوارچێوەی ئاسن بۆ تابلۆی فلێکس', perM2),
+  i('inst-sticker', 'install-sticker', 'm2', 'Sticker installation on glass / wall', 'تركيب ستيكر على زجاج أو جدار', 'لکاندنی ستیکەر لەسەر شووشە یان دیوار', perM2),
+  i('inst-frosted', 'install-sticker', 'm2', 'Frosted glass film installation', 'تركيب ستيكر مثلج للزجاج', 'لکاندنی ستیکەری تەماوی بۆ شووشە', perM2),
+  i('inst-car', 'install-sticker', 'piece', 'Car wrap installation (full car)', 'تغليف سيارة كامل', 'بەرگکردنی تەواوی ئۆتۆمبێل'),
+  i('inst-3d', 'install-sign', 'piece', '3D letter installation (per letter)', 'تركيب حروف بارزة (للحرف)', 'دانانی پیتی بەرجەستە (بۆ هەر پیتێک)'),
+  i('inst-lightbox', 'install-sign', 'piece', 'Light box sign installation', 'تركيب لوحة لايت بوكس', 'دانانی تابلۆی لایت بۆکس'),
+  i('inst-acp', 'install-acp', 'm2', 'Alucobond cladding with installation', 'تكسية ألكوبوند مع التركيب', 'داپۆشینی ئەلەکوبۆند لەگەڵ دانان', perM2),
+  i('design-logo', 'design-service', 'piece', 'Logo design', 'تصميم شعار', 'دیزاینی لۆگۆ'),
+  i('design-print', 'design-service', 'piece', 'Design for print (card, flyer, banner)', 'تصميم للطباعة (كرت، فلاير، بنر)', 'دیزاین بۆ چاپ (کارت، فلایەر، بانەر)'),
+  i('sign-fix', 'sign-repair', 'piece', 'Sign repair visit (LED, lighting)', 'زيارة صيانة لوحة (ليد، إنارة)', 'سەردانی چاککردنەوەی تابلۆ (LED، ڕووناکی)'),
   // Clothing
   i('tshirt-print', 't-shirts', 'piece', 'T-shirt with logo print', 'تيشيرت مطبوع بالشعار', 'تیشێرتی چاپکراو بە لۆگۆ'),
   i('polo-embroid', 't-shirts', 'piece', 'Polo shirt with embroidery', 'بولو مطرز', 'پۆلۆی چنراو'),

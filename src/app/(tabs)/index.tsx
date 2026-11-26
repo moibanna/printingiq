@@ -21,6 +21,7 @@ export default function Home() {
       <QuickActions items={[
         { icon: 'send', title: t('getOffers'), sub: t('getOffersSub'), href: '/request' },
         { icon: 'scale', title: t('comparePrices'), sub: t('comparePricesSub'), href: '/prices' },
+        { icon: 'installer', title: t('findPros'), sub: t('findProsSub'), href: '/pros' },
       ]} />
 
       <SectionTitle title={t('categories')} href="/categories" />

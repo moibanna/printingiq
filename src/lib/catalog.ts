@@ -19,6 +19,7 @@ export const GROUPS: Group[] = [
   { id: 'promo', tint: '#FDE7EF', name: { en: 'Promotional & gifts', ar: 'الهدايا والدعاية', ckb: 'دیاری و پرۆمۆشن' } },
   { id: 'awards', tint: '#FFF0D1', name: { en: 'Awards & medals', ar: 'الدروع والميداليات', ckb: 'خەڵات و مەدالیا' } },
   { id: 'apparel', tint: '#E4F2FF', name: { en: 'Clothing & bags', ar: 'الملابس والحقائب', ckb: 'جل و جانتا' } },
+  { id: 'install', tint: '#E8F5E1', name: { en: 'Installation & design', ar: 'التركيب والتصميم', ckb: 'دامەزراندن و دیزاین' } },
 ];
 
 const c = (group: string, id: string, en: string, ar: string, ckb: string): Category => ({ id, group, name: { en, ar, ckb } });
@@ -85,6 +86,13 @@ export const CATEGORIES: Category[] = [
   c('awards', 'trophies', 'Trophies', 'كؤوس', 'جام'),
   c('awards', 'medals', 'Medals', 'ميداليات', 'مەدالیا'),
   c('awards', 'seals', 'Certificate seals & stickers', 'أختام وستيكرات شهادات', 'لەزگەی بڕوانامە'),
+  // Installation & design (installers and print houses offer these as services)
+  c('install', 'install-flex', 'Flex & banner installation', 'تركيب فليكس وبنرات', 'دانانی فلێکس و بانەر'),
+  c('install', 'install-sticker', 'Sticker, glass & car wrapping', 'تركيب ستيكر وزجاج وتغليف سيارات', 'لکاندنی ستیکەر، شووشە و ئۆتۆمبێل'),
+  c('install', 'install-sign', '3D letters & sign installation', 'تركيب حروف بارزة ولوحات', 'دانانی پیتی بەرجەستە و تابلۆ'),
+  c('install', 'install-acp', 'Alucobond cladding', 'تركيب ألكوبوند', 'دانانی ئەلەکوبۆند'),
+  c('install', 'design-service', 'Graphic design', 'تصميم جرافيك', 'دیزاینی گرافیک'),
+  c('install', 'sign-repair', 'Sign maintenance & repair', 'صيانة اللوحات', 'چاککردنەوەی تابلۆ'),
   // Clothing & bags
   c('apparel', 't-shirts', 'T-shirts & polos', 'تيشيرتات', 'تیشێرت'),
   c('apparel', 'hats', 'Hats & caps', 'قبعات', 'کڵاو'),
@@ -150,7 +158,16 @@ export type Vendor = {
   imported?: boolean;
   /** When that copy was last refreshed (ISO date) */
   syncedAt?: string;
+  /** What kind of business: a shop, a print house (printing services), or an installer who works on site (no shop) */
+  kind?: VendorKind;
+  /** Cities they work in (installers and print houses that deliver); the shop's own city is `city` */
+  areas?: string[];
+  /** Photos of finished work */
+  portfolio?: string[];
 };
+
+export type VendorKind = 'shop' | 'printhouse' | 'installer';
+export const VENDOR_KINDS: VendorKind[] = ['shop', 'printhouse', 'installer'];
 
 /** A customer reaching out to a vendor through PrintingIQ. Vendors see these in their dashboard. */
 export type LeadChannel = 'whatsapp' | 'call' | 'quote';

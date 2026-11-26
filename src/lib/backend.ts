@@ -285,7 +285,7 @@ const fromLeadRow = (r: LeadRow): Lead => ({
   message: r.message ?? undefined, items: r.items ?? [], createdAt: r.created_at, read: !!r.read_at,
 });
 
-const VENDOR_COLS = 'id,name,city,phone,whatsapp,email,about,verified';
+const VENDOR_COLS = 'id,name,city,phone,whatsapp,email,about,verified,kind,areas,portfolio';
 
 type RequestRow = {
   id: string; group_id: string; category_id: string | null; description: string; quantity: string | null; city: string;
@@ -341,6 +341,8 @@ function supabaseBackend(url: string, key: string): Backend {
   const upsertVendor = async (id: string, v: VendorInput) =>
     must(await sb.from('vendors').upsert({
       id, name: v.name, city: v.city, phone: v.phone, whatsapp: v.whatsapp || null, email: v.email || null, about: v.about || null,
+      kind: v.kind ?? 'shop', areas: v.areas ?? [],
+      portfolio: await Promise.all((v.portfolio ?? []).slice(0, 12).map((u) => uploadImage(sb, id, u))),
     }).select(VENDOR_COLS).single()) as Vendor;
 
   return {

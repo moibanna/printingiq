@@ -19,7 +19,7 @@ const parsePrice = (v: string) => (v.trim() ? Number(v.replace(/[^\d.]/g, '')) |
  * Vendor dashboard → Price list: tick the standard items you sell and type a price. Each ticked item becomes a product
  * in the shop (with templateId), so a whole shop is listed in minutes and customers can compare prices.
  */
-export function PriceListEditor({ vendorId }: { vendorId: string }) {
+export function PriceListEditor({ vendorId, startGroup = null }: { vendorId: string; startGroup?: string | null }) {
   const { t, tl } = useI18n();
   const { products, addProduct, updateProduct, deleteProduct } = useStore();
   const existing = useMemo(() => {
@@ -29,7 +29,7 @@ export function PriceListEditor({ vendorId }: { vendorId: string }) {
   }, [products, vendorId]);
   const [rows, setRows] = useState<Record<string, Row>>(() =>
     Object.fromEntries(Object.entries(existing).map(([k, p]) => [k, { on: true, price: p.price != null ? String(p.price) : '', currency: p.currency }])));
-  const [group, setGroup] = useState<string | null>(null);
+  const [group, setGroup] = useState<string | null>(startGroup);
   const [q, setQ] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');

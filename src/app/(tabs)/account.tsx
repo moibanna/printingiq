@@ -1,12 +1,14 @@
+import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Platform, Pressable, View } from 'react-native';
+import { Image, Linking, Platform, Pressable, View } from 'react-native';
 import { Icon, IconName } from '../../components/icons';
 import { Text } from '../../components/text';
 import { Button, Chip, Field, H, LangSwitcher, Muted, ProductThumb, s, Screen } from '../../components/ui';
 import { RequestsInbox } from '../../components/requests';
 import { BulkPriceChange, PriceListEditor, ShopLinks } from '../../components/vendorTools';
-import { CITIES, Lead } from '../../lib/catalog';
+import { VendorInput } from '../../lib/backend';
+import { CITIES, Lead, Vendor, VENDOR_KINDS, VendorKind } from '../../lib/catalog';
 import { formatPrice, intlPhone } from '../../lib/format';
 import { StringKey, useI18n } from '../../lib/i18n';
 import { useStore } from '../../lib/store';
@@ -14,23 +16,79 @@ import { C } from '../../lib/theme';
 
 const confirmDelete = (msg: string) => Platform.OS !== 'web' || window.confirm(msg);
 
-function ShopFields({ v, set }: { v: ShopForm; set: (k: keyof ShopForm, val: string) => void }) {
+type ShopForm = { name: string; phone: string; whatsapp: string; city: string; about: string; kind: VendorKind; areas: string[]; portfolio: string[] };
+const emptyShop: ShopForm = { name: '', phone: '', whatsapp: '', city: 'Erbil', about: '', kind: 'shop', areas: [], portfolio: [] };
+const shopOf = (v: Vendor): ShopForm => ({
+  name: v.name, phone: v.phone, whatsapp: v.whatsapp ?? '', city: v.city, about: v.about ?? '', kind: v.kind ?? 'shop',
+  areas: v.areas ?? [], portfolio: v.portfolio ?? [],
+});
+const inputOf = (f: ShopForm, email?: string): VendorInput => ({
+  name: f.name.trim(), phone: f.phone.trim(), whatsapp: f.whatsapp.trim() || undefined, city: f.city, about: f.about.trim() || undefined,
+  kind: f.kind, areas: f.kind === 'shop' ? [] : f.areas.filter((a) => a !== f.city), portfolio: f.portfolio, email,
+});
+
+/** Shop details. Shops, print houses and installers (no shop: they work on site, in the cities they choose). */
+function ShopFields({ v, set, withPortfolio }: { v: ShopForm; set: (patch: Partial<ShopForm>) => void; withPortfolio?: boolean }) {
   const { t, tl } = useI18n();
+  async function addPhotos() {
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsMultipleSelection: true, selectionLimit: 12 });
+    if (!r.canceled) set({ portfolio: [...v.portfolio, ...r.assets.map((a) => a.uri)].slice(0, 12) });
+  }
   return (
     <>
-      <Field label={t('shopName')} value={v.name} onChangeText={(x) => set('name', x)} />
-      <Field label={t('phone')} value={v.phone} onChangeText={(x) => set('phone', x)} keyboardType="phone-pad" ltr />
-      <Field label={t('whatsappNumber')} value={v.whatsapp} onChangeText={(x) => set('whatsapp', x)} keyboardType="phone-pad" ltr />
-      <Text style={s.label}>{t('city')}</Text>
-      <View style={[s.row, { marginBottom: 12 }]}>
-        {CITIES.map((c) => <Chip key={c.en} label={tl(c)} active={v.city === c.en} onPress={() => set('city', c.en)} />)}
+      <Text style={s.label}>{t('accountType')}</Text>
+      <View style={{ gap: 8, marginBottom: 12 }}>
+        {VENDOR_KINDS.map((k) => (
+          <Pressable key={k} onPress={() => set({ kind: k })} accessibilityRole="radio" accessibilityState={{ checked: v.kind === k }}
+            style={[s.panel, { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10 }, v.kind === k && { borderColor: C.primary, backgroundColor: C.primarySoft }]}>
+            <Icon name={k} size={22} color={v.kind === k ? C.primary : C.muted} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '700', color: C.text, fontSize: 14 }}>{t(`kind_${k}`)}</Text>
+              <Text style={{ fontSize: 12, color: C.muted }}>{t(`kind_${k}Sub`)}</Text>
+            </View>
+            {v.kind === k && <Icon name="ok" size={20} color={C.primary} />}
+          </Pressable>
+        ))}
       </View>
-      <Field label={t('aboutShop')} value={v.about} onChangeText={(x) => set('about', x)} multiline />
+      <Field label={t('shopName')} value={v.name} onChangeText={(x) => set({ name: x })} />
+      <Field label={t('phone')} value={v.phone} onChangeText={(x) => set({ phone: x })} keyboardType="phone-pad" ltr />
+      <Field label={t('whatsappNumber')} value={v.whatsapp} onChangeText={(x) => set({ whatsapp: x })} keyboardType="phone-pad" ltr />
+      <Text style={s.label}>{v.kind === 'shop' ? t('city') : t('cityBased')}</Text>
+      <View style={[s.row, { marginBottom: 12 }]}>
+        {CITIES.map((c) => <Chip key={c.en} label={tl(c)} active={v.city === c.en} onPress={() => set({ city: c.en })} />)}
+      </View>
+      {v.kind !== 'shop' && (
+        <>
+          <Text style={s.label}>{t('areasServed')}</Text>
+          <View style={[s.row, { marginBottom: 12 }]}>
+            {CITIES.filter((c) => c.en !== v.city).map((c) => (
+              <Chip key={c.en} label={tl(c)} active={v.areas.includes(c.en)}
+                onPress={() => set({ areas: v.areas.includes(c.en) ? v.areas.filter((x) => x !== c.en) : [...v.areas, c.en] })} />
+            ))}
+          </View>
+        </>
+      )}
+      <Field label={t('aboutShop')} value={v.about} onChangeText={(x) => set({ about: x })} multiline />
+      {withPortfolio && (
+        <View style={{ gap: 6, marginBottom: 12 }}>
+          <Text style={s.label}>{t('portfolio')}</Text>
+          <Muted style={{ fontSize: 12 }}>{t('portfolioHint')}</Muted>
+          <View style={s.row}>
+            {v.portfolio.map((u) => (
+              <Pressable key={u} onPress={() => set({ portfolio: v.portfolio.filter((x) => x !== u) })}>
+                <Image source={{ uri: u }} style={{ width: 72, height: 72, borderRadius: 8 }} />
+                <View style={{ position: 'absolute', top: 4, end: 4, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 10, padding: 2 }}>
+                  <Icon name="close" size={12} color="#fff" />
+                </View>
+              </Pressable>
+            ))}
+            {v.portfolio.length < 12 && <Button small variant="outline" icon="camera" title={t('addPhoto')} onPress={addPhotos} />}
+          </View>
+        </View>
+      )}
     </>
   );
 }
-type ShopForm = { name: string; phone: string; whatsapp: string; city: string; about: string };
-const emptyShop: ShopForm = { name: '', phone: '', whatsapp: '', city: 'Erbil', about: '' };
 
 /** Sign in / create vendor account */
 function Auth() {
@@ -49,9 +107,7 @@ function Auth() {
     setBusy(true);
     try {
       if (signup) {
-        const r = await signUpVendor(email.trim(), pw, {
-          name: shop.name.trim(), phone: shop.phone.trim(), whatsapp: shop.whatsapp.trim() || undefined, city: shop.city, about: shop.about.trim() || undefined,
-        });
+        const r = await signUpVendor(email.trim(), pw, inputOf(shop));
         if (r.needsConfirmation) { setMsg({ text: t('checkEmail'), ok: true }); setSignup(false); }
       } else {
         await signIn(email.trim(), pw);
@@ -74,7 +130,7 @@ function Auth() {
           <Muted style={{ fontSize: 12 }}>{t('customersNoAccount')}</Muted>
         </View>
       </View>
-      {signup && <ShopFields v={shop} set={(k, val) => setShop((x) => ({ ...x, [k]: val }))} />}
+      {signup && <ShopFields v={shop} set={(patch) => setShop((x) => ({ ...x, ...patch }))} />}
       <Field label={t('email')} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" ltr />
       <Field label={t('password')} value={pw} onChangeText={setPw} secureTextEntry hint={signup ? t('passwordHint') : undefined} ltr />
       {msg && <Text style={{ color: msg.ok ? C.success : C.danger, fontSize: 13 }}>{msg.text}</Text>}
@@ -144,15 +200,14 @@ function Dashboard() {
     if (k === 'requests') seenRequests(); // opening Requests marks the current ones as seen
     setTabState(k);
   };
-  const [shop, setShop] = useState<ShopForm>(() =>
-    me ? { name: me.name, phone: me.phone, whatsapp: me.whatsapp ?? '', city: me.city, about: me.about ?? '' } : emptyShop);
+  const [shop, setShop] = useState<ShopForm>(() => (me ? shopOf(me) : emptyShop));
   const [saved, setSaved] = useState('');
   const [notifPerm, setNotifPerm] = useState(Platform.OS === 'web' && typeof Notification !== 'undefined' ? Notification.permission : 'granted');
   if (!me) return null;
   const mine = products.filter((p) => p.vendorId === me.id);
 
   const tabs: [Tab, StringKey, IconName, number?][] = [
-    ['inquiries', 'inquiries', 'inbox', unread], ['requests', 'requests', 'send', newRequests], ['prices', 'priceList', 'receipt'], ['products', 'myProducts', 'grid', mine.length],
+    ['inquiries', 'inquiries', 'inbox', unread], ['requests', 'requests', 'send', newRequests], ['prices', me.kind && me.kind !== 'shop' ? 'myServices' : 'priceList', 'receipt'], ['products', 'myProducts', 'grid', mine.length],
     ['shop', 'myShop', 'store'],
   ];
 
@@ -203,7 +258,7 @@ function Dashboard() {
       ))}
 
       {tab === 'requests' && <RequestsInbox />}
-      {tab === 'prices' && <PriceListEditor vendorId={me.id} />}
+      {tab === 'prices' && <PriceListEditor vendorId={me.id} startGroup={me.kind === 'installer' ? 'install' : me.kind === 'printhouse' ? 'services' : null} />}
 
       {tab === 'products' && mine.length > 0 && <BulkPriceChange products={mine} />}
       {tab === 'products' && (
@@ -225,10 +280,10 @@ function Dashboard() {
       {tab === 'shop' && <ShopLinks />}
       {tab === 'shop' && (
         <View style={s.panel}>
-          <ShopFields v={shop} set={(k, val) => setShop((x) => ({ ...x, [k]: val }))} />
+          <ShopFields v={shop} set={(patch) => setShop((x) => ({ ...x, ...patch }))} withPortfolio />
           <Button icon="check" title={t('save')} disabled={!shop.name.trim() || !shop.phone.trim()}
             onPress={async () => {
-              await store.saveProfile({ name: shop.name.trim(), city: shop.city, phone: shop.phone.trim(), whatsapp: shop.whatsapp.trim() || undefined, about: shop.about.trim() || undefined, email: me.email });
+              await store.saveProfile(inputOf(shop, me.email));
               setSaved(t('saved'));
             }} />
           {saved ? <Text style={{ color: C.success, fontSize: 13 }}>{saved}</Text> : null}

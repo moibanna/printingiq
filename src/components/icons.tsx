@@ -1,7 +1,7 @@
 import {
   ArrowLeft, ArrowRight, Award, Backpack, BadgeCheck, BatteryCharging, Bell, Box, Calculator, Camera, Car, Check, CircleCheck,
   ClipboardList, Clock, ExternalLink, Globe, RefreshCw, Coffee, Contact, Copy, CupSoda, Cylinder, DoorOpen, Droplet, Droplets, File, Files, Film, Flame, Folder,
-  Frame, Gem, Gift, HardHat, Heart, House, IdCard, Image, Inbox, Info, KeyRound, Laptop, Layers, LayoutGrid, Lightbulb, LogOut,
+  Frame, Gem, Gift, Hammer, HardHat, Heart, House, IdCard, Image, Inbox, Info, KeyRound, Laptop, Layers, LayoutGrid, Lightbulb, LogOut,
   LucideIcon, Mail, MapPin, Medal, MessageCircle, Minus, Monitor, Newspaper, Notebook, Package, PaintBucket, Palette, PanelTop,
   Paperclip, Pen, Pencil, PenTool, Phone, Plus, Presentation, Printer, Receipt, Scale, Scissors, Send, MessageSquare, Upload, Link2, Scroll, ScrollText, Search, ShieldCheck,
   Shirt, ShoppingBag, ShoppingCart, Signpost, Sparkles, Square, Star, Sticker, Store, Sun, Tags, Trash2, TriangleAlert, Trophy,
@@ -30,6 +30,8 @@ export const ICONS = {
   mugs: Coffee, thermos: CupSoda, keychains: KeyRound, flash: Usb, powerbank: BatteryCharging, clocks: Clock, 'gift-box': Gift,
   'gift-bags': ShoppingBag, frames: Frame, 'tissue-box': Box, sunshade: Car, holographic: Sparkles,
   crystal: Gem, 'wood-award': Award, trophies: Trophy, medals: Medal, seals: BadgeCheck,
+  install: Hammer, 'install-flex': Hammer, 'install-sticker': Sticker, 'install-sign': Lightbulb, 'install-acp': PanelTop,
+  'design-service': PenTool, 'sign-repair': Wrench, installer: HardHat, printhouse: Printer, shop: Store,
   't-shirts': Shirt, hats: HardHat, vests: ShieldCheck, bags: Backpack, 'laptop-bags': Laptop,
 } satisfies Record<string, LucideIcon>;
 
