@@ -10,7 +10,9 @@ import { Icon, IconName } from './icons';
 import { Text, TextInput } from './text';
 
 /** Platform support number shown in the top bar and footer. Replace with your own. */
-export const SUPPORT_PHONE = '9647500000000';
+/** PrintingIQ's own WhatsApp / phone number (international format, digits only) */
+export const SUPPORT_PHONE = '9647509912525';
+export const SUPPORT_PHONE_SHOWN = '+964 750 991 2525';
 
 const flat = (...st: (object | false | undefined)[]) => StyleSheet.flatten(st.filter(Boolean) as object[]);
 
@@ -180,7 +182,7 @@ export function WebHeader() {
           <View style={{ flex: 1 }} />
           <Pressable onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon name="whatsapp" size={15} color={C.success} />
-            <Text style={{ fontSize: 12, color: C.text, direction: 'ltr' } as object}>+{SUPPORT_PHONE}</Text>
+            <Text style={{ fontSize: 12, color: C.text, direction: 'ltr' } as object}>{SUPPORT_PHONE_SHOWN}</Text>
           </Pressable>
         </View>
       </View>
@@ -217,10 +219,14 @@ export function Footer() {
         <View style={{ flex: 1.3, minWidth: 220, gap: 10 }}>
           <Logo light />
           <Text style={{ color: '#C9D6E8', lineHeight: 24, fontSize: 13 }}>{t('footerAbout')}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Pressable onPress={() => Linking.openURL(`tel:+${SUPPORT_PHONE}`)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Icon name="phone" size={15} color="#fff" />
-            <Text style={{ color: '#fff', direction: 'ltr', fontSize: 13 } as object}>+{SUPPORT_PHONE}</Text>
-          </View>
+            <Text style={{ color: '#fff', direction: 'ltr', fontSize: 13 } as object}>{SUPPORT_PHONE_SHOWN}</Text>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL(`https://wa.me/${SUPPORT_PHONE}`)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="whatsapp" size={15} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 13 }}>WhatsApp</Text>
+          </Pressable>
         </View>
         <View style={{ flex: 1, minWidth: 160, gap: 8 }}>
           <Text style={s.footHead}>{t('quickLinks')}</Text>
