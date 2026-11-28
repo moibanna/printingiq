@@ -1,6 +1,35 @@
 {
- "ranAt": "2026-11-27T20:44:59Z",
- "total": 1885,
+ "ranAt": "2026-11-28T07:49:52Z",
+ "total": 1862,
  "exchangeRate": "kept previous rate 1692 (ValueError: no dollar market report found on https://shafaq.com/en/Economy)",
- "sources": []
+ "sources": [
+  {
+   "id": "printway",
+   "ok": true,
+   "products": 541,
+   "before": 541,
+   "seconds": 6
+  },
+  {
+   "id": "365promo",
+   "ok": true,
+   "products": 202,
+   "before": 225,
+   "seconds": 3
+  },
+  {
+   "id": "penna",
+   "ok": true,
+   "products": 334,
+   "before": 334,
+   "seconds": 2
+  },
+  {
+   "id": "toolmart",
+   "ok": true,
+   "products": 785,
+   "before": 785,
+   "seconds": 34
+  }
+ ]
 }
